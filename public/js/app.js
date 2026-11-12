@@ -25,6 +25,18 @@ function obj(form){return Object.fromEntries(new FormData(form).entries());}
 function celda(row,text){const e=document.createElement('td');e.className='p-2 border-b border-slate-100';e.textContent=text==null?'':String(text);row.append(e);return e;}
 function boton(text,callback){const b=document.createElement('button');b.type='button';b.className='font-bold text-guinda underline mx-1';b.textContent=text;b.addEventListener('click',callback);return b;}
 function nombre(p,prefix=''){return [p[prefix+'nombre'],p[prefix+'apellido_paterno'],p[prefix+'apellido_materno']].filter(Boolean).join(' ');}
+for(const campo of ['nombre','apellido_paterno','apellido_materno']){
+ $('inscripcionForm').elements[campo].addEventListener('input',e=>{
+  const noPermitidos=campo==='nombre'?/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ. ]/g:/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]/g;
+  e.target.value=e.target.value.replace(noPermitidos,'');
+ });
+}
+$('inscripcionForm').elements.telefono.addEventListener('input',e=>{
+ e.target.value=e.target.value.replace(/\D/g,'').slice(0,10);
+});
+$('inscripcionForm').elements.seccion_electoral.addEventListener('input',e=>{
+ e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);
+});
 async function inicioPublico(){
  view('publico',true);view('loginVista',false);
  try{
