@@ -7,24 +7,33 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "test": "node --test",
     "crear-admin": "node scripts/crear-admin.js",
     "reset-llave": "node scripts/reset-llave.js",
     "css:build": "tailwindcss -i ./public/css/input.css -o ./public/css/styles.css --minify",
     "css:watch": "tailwindcss -i ./public/css/input.css -o ./public/css/styles.css --watch",
     "db:init": "node scripts/inicializar-db.js",
     "db:migrate:unlimited": "node scripts/migrar-registros-sin-limite.js",
-    "db:migrate:inscripciones": "node scripts/migrar-inscripciones.js"
+    "db:migrate:inscripciones": "node scripts/migrar-inscripciones.js",
+    "db:migrate:curp-no-unica": "node scripts/migrar-curp-no-unica.js",
+    "db:migrate:curp-opcional": "node scripts/migrar-curp-opcional.js",
+    "db:migrate:eliminacion-invitaciones": "node scripts/migrar-eliminacion-invitaciones.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "helmet": "^8.0.0",
     "pg": "^8.13.1",
+    "sweetalert2": "^11.26.25",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.17"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   },
   "engines": {
     "node": ">=20"

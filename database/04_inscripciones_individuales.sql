@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS inscripciones (
  nombre VARCHAR(100) NOT NULL,
  apellido_paterno VARCHAR(100) NOT NULL,
  apellido_materno VARCHAR(100),
- curp CHAR(18) NOT NULL,
+ curp CHAR(18),
  edad SMALLINT NOT NULL CHECK(edad BETWEEN 0 AND 120),
  telefono VARCHAR(20) NOT NULL,
  correo_electronico VARCHAR(254) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS inscripciones (
  eliminado_en TIMESTAMPTZ,
  CONSTRAINT inscripciones_curp_formato CHECK (curp ~ '^[A-Z][AEIOUX][A-Z]{2}[0-9]{2}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])[HM][A-Z]{5}[A-Z0-9][0-9]$')
 );
-CREATE UNIQUE INDEX IF NOT EXISTS inscripciones_curp_unica ON inscripciones(curp) WHERE eliminado_en IS NULL;
+CREATE INDEX IF NOT EXISTS inscripciones_curp ON inscripciones(curp) WHERE eliminado_en IS NULL;
 CREATE INDEX IF NOT EXISTS inscripciones_invitacion_fecha ON inscripciones(invitacion_id,creado_en DESC) WHERE eliminado_en IS NULL;
 CREATE INDEX IF NOT EXISTS inscripciones_distrito ON inscripciones(distrito_numero) WHERE eliminado_en IS NULL;
 COMMIT;

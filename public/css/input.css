@@ -16,4 +16,37 @@
   .inscripciones-scroll thead th { @apply sticky top-0 bg-guinda p-3 text-left; }
   .ordenar-columna { @apply whitespace-nowrap font-semibold hover:underline focus-visible:underline; }
   .ordenar-columna span { @apply ml-1; }
+  .panel-nav { @apply flex flex-wrap gap-2 rounded-xl bg-white p-2 border border-slate-200; }
+  .panel-tab { @apply rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100; }
+  .panel-tab.active { @apply bg-guinda text-white; }
+  .metricas-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 1rem; }
+  .metrica-card { @apply rounded-xl border border-slate-200 p-4 text-center; }
+  .metrica-ring { width: 7rem; height: 7rem; margin: 0 auto 1rem; border-radius: 50%; background: conic-gradient(#6a1c32 var(--progress),#e2e8f0 0); display: grid; place-items: center; }
+  .metrica-ring span { @apply flex h-20 w-20 items-center justify-center rounded-full bg-white font-bold text-guinda; }
+  .report-controls { @apply flex flex-wrap items-end gap-3; }
+  .report-controls label { min-width: min(100%,18rem); flex: 1; }
+  .invitation-actions { @apply flex flex-wrap items-center justify-center gap-1; }
+  .invitation-action { @apply rounded-md px-2 py-1.5 text-xs font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dorado disabled:opacity-50; }
+  .invitation-action-view { @apply invitation-action text-guinda hover:bg-rose-50; }
+  .invitation-action-edit { @apply invitation-action text-slate-700 hover:bg-slate-100; }
+  .invitation-action-revoke { @apply invitation-action text-amber-800 hover:bg-amber-50; }
+  .invitation-action-delete { @apply invitation-action text-red-700 hover:bg-red-50; }
+  .swal2-popup.cots-dialog { @apply rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl; font-family: Montserrat,Arial,sans-serif; max-width: calc(100vw - 2rem); }
+  .cots-dialog .swal2-title { @apply p-0 text-left text-2xl font-extrabold text-guinda; }
+  .cots-dialog .swal2-html-container { @apply m-0 pt-3 text-left text-sm leading-6 text-slate-600; }
+  .cots-dialog .swal2-actions { @apply mt-6 w-full justify-end gap-2; }
+  .cots-dialog-confirm { @apply rounded-lg bg-guinda px-5 py-3 text-sm font-bold text-white transition hover:bg-rose-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dorado disabled:opacity-50; }
+  .cots-dialog-danger { @apply rounded-lg bg-red-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:opacity-50; }
+  .cots-dialog-cancel { @apply rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dorado; }
+  .cots-dialog .swal2-input { @apply mx-0 mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-base shadow-none focus:border-dorado focus:shadow-none; height: 3rem; }
+  .cots-dialog .swal2-validation-message { @apply rounded-lg bg-red-50 text-sm text-red-800; }
+  .cots-dialog-eyebrow { @apply mb-3 block text-xs font-extrabold uppercase tracking-widest text-dorado; }
+  .cots-dialog-name { @apply mt-2 block break-words rounded-lg bg-slate-50 px-3 py-2 font-bold text-slate-900; }
+  .cots-dialog-options { @apply mt-4 grid gap-2; }
+  .cots-dialog-option { @apply flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-dorado; }
+  .cots-dialog-option:has(input:checked) { @apply border-guinda bg-rose-50; }
+  .cots-dialog-option input { @apply mt-1 accent-guinda; }
+  .cots-dialog-option strong { @apply block text-sm text-slate-900; }
+  .cots-dialog-option small { @apply block text-xs leading-5 text-slate-600; }
+  .cots-dialog-warning { @apply mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800; }
 }

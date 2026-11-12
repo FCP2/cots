@@ -22,6 +22,8 @@ app.use('/api',(req,res,next)=>{
  }
  next();
 });
+app.get('/vendor/sweetalert2.min.css',(_req,res)=>res.sendFile(path.join(__dirname,'node_modules/sweetalert2/dist/sweetalert2.min.css')));
+app.get('/vendor/sweetalert2.min.js',(_req,res)=>res.sendFile(path.join(__dirname,'node_modules/sweetalert2/dist/sweetalert2.min.js')));
 app.use(express.static(path.join(__dirname,'public'),{index:'index.html',extensions:false}));
 app.get('/api/salud',async(req,res,next)=>{try{await pool.query('SELECT 1');res.json({ok:true});}catch(e){next(e);}});
 app.use('/api/auth',require('./routes/auth'));
@@ -29,7 +31,7 @@ app.use('/api/public',require('./routes/publico'));
 app.use('/api/admin',require('./routes/admin'));
 app.use((req,res)=>res.status(404).json({error:'Ruta no encontrada'}));
 app.use((err,req,res,next)=>{
- if(err.code==='23505')return res.status(409).json({error:'No se pudo completar el registro. Si ya te inscribiste, contacta al responsable.'});
+ if(err.code==='23505')return res.status(409).json({error:'No se pudo completar el registro. Contacta al responsable.'});
  if(err.code==='23503')return res.status(400).json({error:'El distrito seleccionado no está disponible'});
  if(err.code==='23514'||err.code==='22P02')return res.status(400).json({error:'Valores no válidos'});
  console.error(err);
