@@ -1,0 +1,32 @@
+{
+  "name": "propuesta-cots",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Inscripción individual COTS con invitaciones y PostgreSQL",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "crear-admin": "node scripts/crear-admin.js",
+    "reset-llave": "node scripts/reset-llave.js",
+    "css:build": "tailwindcss -i ./public/css/input.css -o ./public/css/styles.css --minify",
+    "css:watch": "tailwindcss -i ./public/css/input.css -o ./public/css/styles.css --watch",
+    "db:init": "node scripts/inicializar-db.js",
+    "db:migrate:unlimited": "node scripts/migrar-registros-sin-limite.js",
+    "db:migrate:inscripciones": "node scripts/migrar-inscripciones.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "pg": "^8.13.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer components {
+  .card { @apply bg-white rounded-2xl shadow-sm border border-slate-200 p-5; }
+  .btn { @apply rounded-lg px-4 py-2 font-semibold transition disabled:opacity-50; }
+  .btn-primary { @apply btn bg-guinda text-white hover:bg-rose-950; }
+  .btn-secondary { @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200; }
+  .field { @apply w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-dorado; }
+  .label { @apply text-sm font-semibold text-slate-600 block mb-1; }
+  .selected-district { @apply block mt-1 text-xs text-slate-500 break-words; }
+  .btn-loading { @apply cursor-wait; }
+  .loader { @apply inline-block h-4 w-4 rounded-full border-2 border-current border-r-transparent align-[-0.15em] animate-spin; }
+  .inscripciones-scroll { @apply overflow-auto; }
+  .inscripciones-scroll.is-scrollable { overscroll-behavior: contain; }
+  .inscripciones-scroll thead th { @apply sticky top-0 bg-guinda p-3 text-left; }
+  .ordenar-columna { @apply whitespace-nowrap font-semibold hover:underline focus-visible:underline; }
+  .ordenar-columna span { @apply ml-1; }
+}
