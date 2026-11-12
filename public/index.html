@@ -25,15 +25,15 @@
   <div id="formVista" class="card"><h3 class="font-extrabold text-lg text-guinda mb-4">Datos</h3>
    <form id="inscripcionForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <label class="md:col-span-3"><span class="label">Código de invitación *</span><input class="field uppercase font-mono" name="codigo_invitacion" required maxlength="19" pattern="[A-Za-z0-9]{4}(-[A-Za-z0-9]{4}){3}" autocomplete="off" placeholder="XXXX-XXXX-XXXX-XXXX"></label>
-    <label><span class="label">Nombre(s) *</span><input class="field" name="nombre" required maxlength="100" autocomplete="given-name"></label>
-    <label><span class="label">Apellido paterno *</span><input class="field" name="apellido_paterno" required maxlength="100"></label>
-    <label><span class="label">Apellido materno</span><input class="field" name="apellido_materno" maxlength="100"></label>
+    <label><span class="label">Nombre(s) *</span><input class="field" name="nombre" required maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ. ]*" title="Usa letras, espacios y puntos; por ejemplo, Ma. José" autocomplete="given-name"></label>
+    <label><span class="label">Apellido paterno *</span><input class="field" name="apellido_paterno" required maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]*" title="Usa solo letras y espacios"></label>
+    <label><span class="label">Apellido materno</span><input class="field" name="apellido_materno" maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]*" title="Usa solo letras y espacios"></label>
     <label><span class="label">CURP *</span><input class="field uppercase font-mono" name="curp" required minlength="18" maxlength="18" autocapitalize="characters" autocomplete="off" placeholder="18 caracteres"></label>
     <label><span class="label">Edad *</span><input class="field" name="edad" required type="number" min="0" max="120"></label>
-    <label><span class="label">Teléfono *</span><input class="field" name="telefono" required type="tel" maxlength="20" autocomplete="tel"></label>
+    <label><span class="label">Teléfono *</span><input class="field" name="telefono" required type="tel" inputmode="numeric" minlength="10" maxlength="10" pattern="[0-9]{10}" title="Escribe exactamente 10 dígitos numéricos" autocomplete="tel"></label>
     <label class="md:col-span-2"><span class="label">Correo electrónico *</span><input class="field" name="correo_electronico" required type="email" maxlength="254" autocomplete="email"></label>
     <label class="md:col-span-2"><span class="label">Distrito electoral federal *</span><select class="field" name="distrito_numero" required aria-describedby="distritoSeleccionado"><option value="">Selecciona un distrito</option></select><span id="distritoSeleccionado" class="selected-district" aria-live="polite"></span></label>
-    <label><span class="label">Sección electoral *</span><input class="field" name="seccion_electoral" required inputmode="numeric" maxlength="10" pattern="[0-9]{1,10}"></label>
+    <label><span class="label">Sección electoral *</span><input class="field" name="seccion_electoral" type="text" required inputmode="numeric" minlength="1" maxlength="4" pattern="[0-9]{1,4}" title="Escribe de 1 a 4 dígitos numéricos" autocomplete="off"></label>
     <div class="md:col-span-3 pt-3"><h4 class="font-bold text-guinda">Referente</h4><p class="text-xs text-slate-500">Escribe el nombre del referente correspondiente.</p></div>
     <label><span class="label">Nombre(s) del referente *</span><input class="field" name="referente_nombre" required maxlength="100"></label>
     <label><span class="label">Apellido paterno del referente *</span><input class="field" name="referente_apellido_paterno" required maxlength="100"></label>
