@@ -6,6 +6,19 @@ let pendiente=null,enviando=false,revisando=false,entrando=false,generandoInvita
 let inscripciones=[],ordenInscritos={col:'creado_en',dir:'desc'};
 let responsables=[];
 function view(id,show){$(id).classList.toggle('hidden',!show);}
+function limitarVisibles(contenedor,elementos,limite){
+ const mostrarScroll=elementos.length>limite&&contenedor.getClientRects().length>0;
+ contenedor.classList.toggle('is-scrollable',mostrarScroll);
+ contenedor.style.maxHeight='';
+ if(mostrarScroll){
+  const alto=elementos[limite-1].getBoundingClientRect().bottom-contenedor.getBoundingClientRect().top+contenedor.scrollTop;
+  contenedor.style.maxHeight=`${Math.ceil(alto)}px`;
+ }
+}
+function ajustarPaneles(){
+ limitarVisibles($('contenedorInvitaciones'),$('tablaInvitaciones').rows,7);
+ limitarVisibles($('metricasResponsables'),$('metricasResponsables').children,6);
+}
 function aviso(text,error=false){let el=$('mensaje');el.textContent=text;el.className=`mb-4 rounded-lg p-3 ${error?'bg-red-100 text-red-900':'bg-emerald-100 text-emerald-900'}`;el.scrollIntoView({block:'nearest'});}
 function botonCargando(button,loading,text='Cargando...'){
  if(!button)return;
@@ -142,6 +155,7 @@ function mostrarPanel(id){
   if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
  });
  if(id==='panelSeguimiento')renderInscritos();
+ ajustarPaneles();
 }
 document.querySelectorAll('.panel-tab').forEach(b=>b.addEventListener('click',()=>mostrarPanel(b.dataset.panel)));
 $('salir').addEventListener('click',async()=>{try{await api('/api/auth/salir',{method:'POST'});location.href='/';}catch(e){aviso(e.message,true);}});
@@ -164,6 +178,7 @@ async function cargarAdmin(){
   group.append(botonAccion('Eliminar','delete',()=>eliminarInvitacion(x).catch(e=>aviso(e.message,true))));
   actions.append(group);body.append(tr);
  }
+ ajustarPaneles();
  await cargarInscritos();
 }
 async function cargarInscritos(id=null,etiqueta=''){
@@ -194,7 +209,10 @@ function renderMetricas(){
   card.append(ring,title,count,caption);contenedor.append(card);
  }
  select.value=anterior;$('exportarResponsable').disabled=!select.value;
+ ajustarPaneles();
 }
+window.addEventListener('resize',ajustarPaneles);
+document.fonts?.ready.then(ajustarPaneles);
 $('responsableReporte').addEventListener('change',e=>{$('exportarResponsable').disabled=!e.target.value;});
 async function descargarExcel(button,responsable){
  botonCargando(button,true,'Preparando Excel...');
