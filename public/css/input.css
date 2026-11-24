@@ -288,7 +288,8 @@ body:has(#loginVista:not(.hidden)) > header {
 #confirmacionVista .confirm-remove { color:#8a263c; font-size:.8rem; font-weight:700; text-decoration:underline; }
 #confirmacionVista .confirm-muted { color:#675d59; font-weight:500; }
 #confirmacionVista textarea { width:100%; resize:vertical; }
-#confirmacionVista .confirm-photo img { width:9rem; height:11rem; object-fit:cover; margin-top:.8rem; border:2px solid var(--confirm-gold); border-radius:.5rem; }
+#confirmacionVista .confirm-photo { inline-size:9rem; block-size:11rem; margin-top:.8rem; overflow:clip; border:2px solid var(--confirm-gold); border-radius:.5rem; background:#f4f4f4; contain:layout paint; }
+#confirmacionVista .confirm-photo img { display:block; inline-size:100%; block-size:100%; max-inline-size:none; max-block-size:none; object-fit:cover; object-position:center; }
 #confirmacionVista .confirm-preview-pane { margin-block:1.1rem; }
 #confirmacionVista .confirm-preview-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:1.2rem 1.5rem; border:1px solid #e8dfd6; border-radius:.8rem .8rem 0 0; background:#faf8f5; }
 #confirmacionVista .confirm-preview-toolbar h2 { margin:.25rem 0 0; color:#4e1223; font-family:Georgia,serif; font-size:1.5rem; }
@@ -301,8 +302,8 @@ body:has(#loginVista:not(.hidden)) > header {
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-brand img:last-child { display:block; width:100%; height:auto; margin-top:-.12rem; opacity:.5; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-name-row { display:grid; grid-template-columns:6rem minmax(0,1fr); align-items:center; gap:.8rem; margin-bottom:1.15rem; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-name-row .curriculum-table-scroll { margin-bottom:0; }
-:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo { width:6rem; height:6rem; display:grid; place-items:center; margin:0; border:1px solid #555; background:#f4f4f4; }
-:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo img { width:100%; height:100%; object-fit:cover; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo { inline-size:6rem; min-inline-size:6rem; max-inline-size:6rem; block-size:6rem; min-block-size:6rem; max-block-size:6rem; display:grid; place-items:center; align-self:center; margin:0; overflow:clip; border:1px solid #555; background:#f4f4f4; contain:layout paint; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo img { display:block; inline-size:100%; block-size:100%; max-inline-size:none; max-block-size:none; object-fit:cover; object-position:center; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table-scroll { max-width:100%; overflow-x:auto; margin-bottom:1.15rem; scrollbar-gutter:stable; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table-scroll:focus-visible { outline:2px solid #bc955c; outline-offset:2px; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table { width:100%; min-width:30rem; border-collapse:collapse; table-layout:fixed; font-size:.8rem; }

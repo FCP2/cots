@@ -403,6 +403,10 @@ function valorInscrito(x,col){
 }
 function celdaFicha(row,value){const td=document.createElement('td');td.textContent=value==null?'':String(value);row.append(td);}
 function mesAnio(value){return value?`${value.slice(5,7)}/${value.slice(0,4)}`:'';}
+function nombreArchivoFicha(value){
+ const nombreLimpio=String(value||'').replace(/[<>:"/\\|?*\u0000-\u001F]/g,'').replace(/\s+/g,' ').trim().replace(/[. ]+$/,'');
+ return `Ficha curricular - ${nombreLimpio||'Registro'}`.slice(0,180);
+}
 async function verFichaAdmin(x,button){
  if(fichaAdminCargando)return;
  fichaAdminCargando=true;botonCargando(button,true,'Abriendo...');
@@ -422,17 +426,36 @@ async function verFichaAdmin(x,button){
   celdaFicha(formacion,r.nivel_estudios);celdaFicha(formacion,r.estatus_estudios);
   const cursos=sheet.querySelector('#confirmPreviewCursos');cursos.replaceChildren();celdaFicha(cursos,r.cursos);
   const photo=sheet.querySelector('#confirmPreviewFoto');
-  photo.src=r.tiene_foto?`/api/admin/inscripciones/${x.id}/foto`:'/assests/ficha-foto-placeholder.png';
-  await photo.decode().catch(()=>{photo.src='/assests/ficha-foto-placeholder.png';});
+  const fotoPredeterminada='/assests/ficha-foto-placeholder.png';
+  photo.width=96;photo.height=96;
+  photo.alt=r.tiene_foto?`Fotografía de ${nombre(r)}`:'Espacio para fotografía';
+  photo.src=r.tiene_foto?`/api/admin/inscripciones/${x.id}/foto`:fotoPredeterminada;
+  try{await photo.decode();}catch{
+   photo.src=fotoPredeterminada;photo.alt='Espacio para fotografía';
+   await photo.decode().catch(()=>{});
+  }
   sheet.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
   $('adminFichaTitulo').textContent=`Ficha curricular · ${nombre(r)}`;
   $('adminFichaEstado').textContent=r.tiene_ficha?'Ficha guardada':'Ficha complementaria pendiente';
   $('adminFichaContenido').replaceChildren(sheet);
   $('adminPrintFicha').replaceChildren(sheet.cloneNode(true));
+  $('adminPrintFicha').dataset.nombreArchivo=nombreArchivoFicha(nombre(r));
   $('adminFichaDialog').showModal();
  }catch(e){aviso(e.message,true);}finally{fichaAdminCargando=false;botonCargando(button,false);}
 }
-$('adminFichaImprimir').addEventListener('click',()=>{if($('adminPrintFicha').firstElementChild)window.print();});
+$('adminFichaImprimir').addEventListener('click',()=>{
+ const printArea=$('adminPrintFicha');if(!printArea.firstElementChild)return;
+ const tituloAnterior=document.title;
+ let restaurado=false;
+ const restaurarTitulo=()=>{
+  if(restaurado)return;restaurado=true;document.title=tituloAnterior;
+  window.removeEventListener('afterprint',restaurarTitulo);window.removeEventListener('focus',restaurarTitulo);
+ };
+ document.title=printArea.dataset.nombreArchivo||'Ficha curricular';
+ window.addEventListener('afterprint',restaurarTitulo,{once:true});
+ window.addEventListener('focus',restaurarTitulo,{once:true});
+ try{window.print();}catch(e){restaurarTitulo();aviso('No fue posible abrir la impresión.',true);}
+});
 function renderInscritos(){
  const {col,dir}=ordenInscritos;
  const rows=[...inscripciones].sort((a,b)=>{
