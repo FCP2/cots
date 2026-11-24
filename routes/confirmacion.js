@@ -16,7 +16,9 @@ const TEXT=z.string().trim().min(1).max(100);
 const IDENTIFICAR=z.object({codigo_invitacion:CODIGO,nombre:TEXT,apellido_paterno:TEXT,apellido_materno:z.string().trim().max(100).default(''),seccion_electoral:z.string().trim().regex(/^(?:\d{1,4})?$/).default(''),telefono:z.string().trim().regex(/^(?:\d{10})?$/).default('')}).strict().refine(v=>Boolean(v.seccion_electoral||v.telefono));
 const MES=z.string().regex(/^\d{4}-(?:0[1-9]|1[0-2])$/);
 const EXPERIENCIA=z.object({puesto:z.string().trim().min(1).max(150),institucion:z.string().trim().min(1).max(150),periodo_inicio:MES,periodo_fin:MES.nullable()}).strict().refine(v=>!v.periodo_fin||v.periodo_fin>=v.periodo_inicio);
-const FICHA=z.object({nivel_estudios:z.enum(['primaria','secundaria','preparatoria','bachillerato','licenciatura','maestría','doctorado','otro']),otro_nivel:z.string().trim().max(100).default(''),estatus_estudios:z.enum(['inconcluso','concluido','titulado']),cursos:z.string().trim().max(5000).default(''),experiencias:z.array(EXPERIENCIA).max(5)}).strict().refine(v=>v.nivel_estudios!=='otro'||v.otro_nivel.length>0);
+const FICHA=z.object({nivel_estudios:z.enum(['primaria','secundaria','preparatoria','bachillerato','licenciatura','maestría','doctorado','otro']),otro_nivel:z.string().trim().max(100).default(''),estatus_estudios:z.enum(['inconcluso','concluido','titulado']),cursos:z.string().trim().max(5000).default(''),sin_experiencia_laboral:z.boolean().default(false),experiencias:z.array(EXPERIENCIA).max(5)}).strict()
+ .refine(v=>v.nivel_estudios!=='otro'||v.otro_nivel.length>0)
+ .refine(v=>v.sin_experiencia_laboral?v.experiencias.length===0:v.experiencias.length>0);
 const NUEVO=z.object({codigo_invitacion:CODIGO,registro:datosInscripcionSchema,ficha:FICHA}).strict();
 const FALLA='No se pudo identificar un registro único con esos datos. Consulta al administrador si necesitas apoyo.';
 const CODIGO_INVALIDO='Código de invitación no disponible.';
@@ -93,8 +95,8 @@ router.post('/nuevo',limit({max:10,windowMs:900000}),async(req,res,next)=>{
    [inv.id,r.nombre,r.apellido_paterno,r.apellido_materno,r.curp,r.edad,r.telefono,r.correo_electronico,r.distrito_numero,
     r.seccion_electoral,r.referente_nombre,r.referente_apellido_paterno,r.referente_apellido_materno]);
   const id=added.rows[0].id,nivel=f.nivel_estudios==='otro'?f.otro_nivel:f.nivel_estudios;
-  await c.query(`INSERT INTO fichas_curriculares(inscripcion_id,nivel_estudios,estatus_estudios,cursos)
-   VALUES($1,$2,$3,$4)`,[id,nivel,f.estatus_estudios,f.cursos]);
+  await c.query(`INSERT INTO fichas_curriculares(inscripcion_id,nivel_estudios,estatus_estudios,cursos,sin_experiencia_laboral)
+   VALUES($1,$2,$3,$4,$5)`,[id,nivel,f.estatus_estudios,f.cursos,f.sin_experiencia_laboral]);
   for(const [index,ex] of f.experiencias.entries()){
    await c.query(`INSERT INTO experiencias_laborales(inscripcion_id,orden,puesto,institucion,periodo_inicio,periodo_fin)
     VALUES($1,$2,$3,$4,$5,$6)`,[id,index+1,ex.puesto,ex.institucion,ex.periodo_inicio,ex.periodo_fin]);
@@ -138,7 +140,7 @@ router.get('/ficha',autenticar,async(req,res,next)=>{
  try{
   const {rows}=await pool.query(`SELECT r.nombre,r.apellido_paterno,r.apellido_materno,
    r.distrito_numero,d.cabecera,r.seccion_electoral,
-   f.nivel_estudios,f.estatus_estudios,f.cursos,
+   f.nivel_estudios,f.estatus_estudios,f.cursos,COALESCE(f.sin_experiencia_laboral,false) AS sin_experiencia_laboral,
    (f.foto_archivo IS NOT NULL) AS tiene_foto
    FROM inscripciones r JOIN invitaciones i ON i.id=r.invitacion_id
    JOIN distritos_federales d ON d.numero=r.distrito_numero
@@ -157,10 +159,10 @@ router.put('/ficha',autenticar,async(req,res,next)=>{
  try{
   await c.query('BEGIN');
   const v=p.data,nivel=v.nivel_estudios==='otro'?v.otro_nivel:v.nivel_estudios;
-  await c.query(`INSERT INTO fichas_curriculares(inscripcion_id,nivel_estudios,estatus_estudios,cursos)
-   VALUES($1,$2,$3,$4) ON CONFLICT(inscripcion_id) DO UPDATE SET
+  await c.query(`INSERT INTO fichas_curriculares(inscripcion_id,nivel_estudios,estatus_estudios,cursos,sin_experiencia_laboral)
+   VALUES($1,$2,$3,$4,$5) ON CONFLICT(inscripcion_id) DO UPDATE SET
    nivel_estudios=EXCLUDED.nivel_estudios,estatus_estudios=EXCLUDED.estatus_estudios,
-   cursos=EXCLUDED.cursos,actualizado_en=now()`,[req.inscripcionId,nivel,v.estatus_estudios,v.cursos]);
+   cursos=EXCLUDED.cursos,sin_experiencia_laboral=EXCLUDED.sin_experiencia_laboral,actualizado_en=now()`,[req.inscripcionId,nivel,v.estatus_estudios,v.cursos,v.sin_experiencia_laboral]);
   await c.query('DELETE FROM experiencias_laborales WHERE inscripcion_id=$1',[req.inscripcionId]);
   for(const [index,ex] of v.experiencias.entries()){
    await c.query(`INSERT INTO experiencias_laborales(inscripcion_id,orden,puesto,institucion,periodo_inicio,periodo_fin)

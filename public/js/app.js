@@ -421,6 +421,7 @@ async function verFichaAdmin(x,button){
   const experiencias=sheet.querySelector('#confirmPreviewExperiencias');experiencias.replaceChildren();
   for(let i=0;i<5;i++){
    const row=document.createElement('tr'),e=data.experiencias[i];
+   if(i===0&&r.sin_experiencia_laboral){const cell=document.createElement('td');cell.colSpan=3;cell.textContent='Sin experiencia laboral';row.append(cell);experiencias.append(row);continue;}
    celdaFicha(row,e?.puesto);celdaFicha(row,e?.institucion);
    celdaFicha(row,e?.periodo_inicio?`${mesAnio(e.periodo_inicio)} — ${e.periodo_fin?mesAnio(e.periodo_fin):'actualidad'}`:'');
    experiencias.append(row);

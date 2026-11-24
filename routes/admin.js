@@ -189,7 +189,7 @@ router.get('/inscripciones/:id/ficha',async(req,res,next)=>{
  if(!/^\d+$/.test(req.params.id))return res.status(400).json({error:'Inscripción no válida'});
  try{
   const {rows}=await pool.query(`SELECT s.nombre,s.apellido_paterno,s.apellido_materno,
-   f.nivel_estudios,f.estatus_estudios,f.cursos,
+   f.nivel_estudios,f.estatus_estudios,f.cursos,COALESCE(f.sin_experiencia_laboral,false) AS sin_experiencia_laboral,
    (f.inscripcion_id IS NOT NULL) AS tiene_ficha,(f.foto_archivo IS NOT NULL) AS tiene_foto
    FROM inscripciones s LEFT JOIN fichas_curriculares f ON f.inscripcion_id=s.id
    WHERE s.id=$1 AND s.eliminado_en IS NULL`,[req.params.id]);

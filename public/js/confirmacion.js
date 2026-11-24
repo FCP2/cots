@@ -18,10 +18,11 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   field('Sección electoral',r.seccion_electoral,root);
  }
  function input(label,type,value,required=false){const wrap=document.createElement('label');wrap.textContent=label;const control=document.createElement('input');control.type=type;control.className='field';control.value=value||'';control.required=required;if(type==='text')control.maxLength=150;wrap.append(control);return {wrap,control};}
+ function experienciaVacia(){return {puesto:'',institucion:'',periodo_inicio:'',periodo_fin:null};}
  function renderExperiences(){const box=el('confirmExperiencias');box.replaceChildren();experiencias.forEach((exp,index)=>{
   const row=document.createElement('div');row.className='confirm-experience';
   const heading=document.createElement('div');heading.className='confirm-heading';const title=document.createElement('h3');title.textContent=`Experiencia ${index+1}`;
-  const remove=document.createElement('button');remove.type='button';remove.className='confirm-remove';remove.textContent='Eliminar';remove.addEventListener('click',()=>{experiencias.splice(index,1);renderExperiences();updateVisiblePreview();});heading.append(title,remove);
+  const remove=document.createElement('button');remove.type='button';remove.className='confirm-remove';remove.textContent='Eliminar';remove.hidden=experiencias.length===1;remove.addEventListener('click',()=>{experiencias.splice(index,1);renderExperiences();actualizarEstadoExperiencia();});heading.append(title,remove);
   const grid=document.createElement('div');grid.className='confirm-grid';
   for(const [key,label,type,required] of [['puesto','Puesto','text',true],['institucion','Institución','text',true],['periodo_inicio','Inicio (mes/año)','month',true],['periodo_fin','Fin (mes/año, opcional)','month',false]]){
    const item=input(label,type,exp[key],required);item.control.addEventListener('input',()=>{exp[key]=item.control.value;});grid.append(item.wrap);
@@ -30,7 +31,8 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  });el('confirmAgregarExperiencia').disabled=experiencias.length>=5;
  }
  function dataFromForm(){const f=el('confirmFichaForm'),fd=new FormData(f);
-  return {nivel_estudios:fd.get('nivel_estudios'),otro_nivel:fd.get('otro_nivel')||'',estatus_estudios:fd.get('estatus_estudios'),cursos:fd.get('cursos')||'',experiencias:experiencias.map(x=>({puesto:x.puesto.trim(),institucion:x.institucion.trim(),periodo_inicio:x.periodo_inicio,periodo_fin:x.periodo_fin||null}))};
+  const sinExperiencia=el('confirmSinExperiencia').checked;
+  return {nivel_estudios:fd.get('nivel_estudios'),otro_nivel:fd.get('otro_nivel')||'',estatus_estudios:fd.get('estatus_estudios'),cursos:fd.get('cursos')||'',sin_experiencia_laboral:sinExperiencia,experiencias:sinExperiencia?[]:experiencias.map(x=>({puesto:x.puesto.trim(),institucion:x.institucion.trim(),periodo_inicio:x.periodo_inicio,periodo_fin:x.periodo_fin||null}))};
  }
  function nuevoRegistro(){const f=el('confirmFichaForm'),fd=new FormData(f),data={};
   for(const key of ['nombre','apellido_paterno','apellido_materno','curp','edad','telefono','correo_electronico','distrito_numero','seccion_electoral','referente_nombre','referente_apellido_paterno','referente_apellido_materno'])data[key]=String(fd.get(key)||'').trim();
@@ -60,7 +62,8 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
     message('La CURP debe tener 18 caracteres y un formato válido, o dejarse vacía.',true);f.elements.curp.focus();return false;
    }
   }
-  const p=dataFromForm();if(p.nivel_estudios==='otro'&&!p.otro_nivel.trim()){el('confirmOtroNivel').focus();message('Especifica el nivel de estudios.',true);return false;}
+  const p=dataFromForm();if(!p.sin_experiencia_laboral&&!p.experiencias.length){message('Agrega por lo menos una experiencia laboral o marca «No tengo experiencia laboral».',true);el('confirmAgregarExperiencia').focus();return false;}
+  if(p.nivel_estudios==='otro'&&!p.otro_nivel.trim()){el('confirmOtroNivel').focus();message('Especifica el nivel de estudios.',true);return false;}
   if(p.experiencias.some(x=>x.periodo_fin&&x.periodo_fin<x.periodo_inicio)){message('El fin de una experiencia no puede ser anterior al inicio.',true);return false;}
   return true;
  }
@@ -77,6 +80,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   const body=el('confirmPreviewExperiencias');body.replaceChildren();
   for(let i=0;i<5;i++){
    const row=document.createElement('tr'),x=p.experiencias[i];
+   if(i===0&&p.sin_experiencia_laboral){const cell=document.createElement('td');cell.colSpan=3;cell.textContent='Sin experiencia laboral';row.append(cell);body.append(row);continue;}
    previewCell(row,x?.puesto);previewCell(row,x?.institucion);
    previewCell(row,x?.periodo_inicio?`${monthYear(x.periodo_inicio)} — ${x.periodo_fin?monthYear(x.periodo_fin):'actualidad'}`:monthYear(x?.periodo_fin));
    body.append(row);
@@ -92,18 +96,18 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  function preview(){renderPreview();
   el('confirmPreviewPane').classList.remove('hidden');el('confirmRevisar').setAttribute('aria-expanded','true');el('confirmPreviewPane').scrollIntoView({block:'start',behavior:'smooth'});
  }
- async function loadFicha({preservarFoto=false}={}){const data=await request('/api/confirmacion/ficha');if(modo==='nuevo'&&!preservarFoto)el('confirmFoto').value='';nuevoIniciado=false;configurarModo(false);registro=data.registro;experiencias=data.experiencias.map(x=>({...x}));displayData(el('confirmDatos'));
+ async function loadFicha({preservarFoto=false}={}){const data=await request('/api/confirmacion/ficha');if(modo==='nuevo'&&!preservarFoto)el('confirmFoto').value='';nuevoIniciado=false;configurarModo(false);registro=data.registro;experiencias=data.experiencias.map(x=>({...x}));if(!experiencias.length)experiencias=[experienciaVacia()];displayData(el('confirmDatos'));
   const niveles=['primaria','secundaria','preparatoria','bachillerato','licenciatura','maestría','doctorado'];
   el('confirmNivel').value=niveles.includes(registro.nivel_estudios)?registro.nivel_estudios:registro.nivel_estudios?'otro':'';
   el('confirmOtroNivel').value=el('confirmNivel').value==='otro'?registro.nivel_estudios:'';
   el('confirmFichaForm').elements.estatus_estudios.value=registro.estatus_estudios||'';
-  el('confirmCursos').value=registro.cursos||'';el('confirmNivel').dispatchEvent(new Event('change'));
-  renderExperiences();showPhoto();step(1);
+  el('confirmCursos').value=registro.cursos||'';el('confirmSinExperiencia').checked=Boolean(registro.sin_experiencia_laboral);el('confirmNivel').dispatchEvent(new Event('change'));
+  renderExperiences();actualizarEstadoExperiencia();showPhoto();step(1);
  }
  function limpiarRegistroNuevo(){
   el('confirmCodigoForm').reset();el('confirmIdentidadForm').reset();el('confirmFichaForm').reset();
   codigo='';registro=null;experiencias=[];permiteNuevo=false;nuevoIniciado=false;
-  configurarModo(false);el('confirmNivel').dispatchEvent(new Event('change'));renderExperiences();showPhoto();
+  configurarModo(false);el('confirmNivel').dispatchEvent(new Event('change'));renderExperiences();actualizarEstadoExperiencia();showPhoto();
   el('confirmDatos').replaceChildren();el('confirmResponsable').textContent='';el('confirmEquipo').textContent='';
   for(const id of ['confirmPreviewNombre','confirmPreviewExperiencias','confirmPreviewFormacion','confirmPreviewCursos'])el(id).replaceChildren();
   el('confirmPreviewFoto').src='/assests/ficha-foto-placeholder.png';el('confirmNuevoDistritoTexto').textContent='';
@@ -121,7 +125,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
    const conservarDatos=nuevoIniciado&&codigo===codigoIngresado;codigo=codigoIngresado;permiteNuevo=true;
    el('confirmResponsable').textContent=inv.responsable;el('confirmEquipo').textContent=inv.equipo;
    await cargarDistritos();configurarModo(true);
-   if(!conservarDatos){el('confirmFichaForm').reset();el('confirmNivel').dispatchEvent(new Event('change'));experiencias=[];renderExperiences();nuevoIniciado=true;}
+   if(!conservarDatos){el('confirmFichaForm').reset();el('confirmNivel').dispatchEvent(new Event('change'));experiencias=[experienciaVacia()];renderExperiences();actualizarEstadoExperiencia();nuevoIniciado=true;}
    actualizarRegistroNuevo();showPhoto();step(1);}
   catch(err){message(err.message,true);}finally{busy=false;loading(button,false);}
  });
@@ -134,13 +138,15 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  });
  el('confirmNuevo').addEventListener('click',async()=>{if(busy||!permiteNuevo)return;busy=true;loading(el('confirmNuevo'),true,'Preparando...');
   try{await cargarDistritos();configurarModo(true);
-   if(!nuevoIniciado){el('confirmFichaForm').reset();el('confirmNivel').dispatchEvent(new Event('change'));experiencias=[];renderExperiences();nuevoIniciado=true;}
+   if(!nuevoIniciado){el('confirmFichaForm').reset();el('confirmNivel').dispatchEvent(new Event('change'));experiencias=[experienciaVacia()];renderExperiences();actualizarEstadoExperiencia();nuevoIniciado=true;}
    actualizarRegistroNuevo();showPhoto();step(1);
   }catch(err){message(err.message,true);}finally{busy=false;loading(el('confirmNuevo'),false);}
  });
  el('confirmVolverIdentidad').addEventListener('click',()=>{if(!busy){step(0);el('confirmCodigo').focus();}});
  el('confirmNivel').addEventListener('change',()=>{const other=el('confirmNivel').value==='otro';el('confirmOtroNivelLabel').classList.toggle('hidden',!other);el('confirmOtroNivel').required=other;});
- el('confirmAgregarExperiencia').addEventListener('click',()=>{if(experiencias.length>=5)return;experiencias.push({puesto:'',institucion:'',periodo_inicio:'',periodo_fin:null});renderExperiences();updateVisiblePreview();});
+ function actualizarEstadoExperiencia(){const sinExperiencia=el('confirmSinExperiencia').checked,fields=el('confirmExperienciaFields');fields.classList.toggle('is-disabled',sinExperiencia);fields.setAttribute('aria-disabled',String(sinExperiencia));fields.querySelectorAll('input,button').forEach(control=>{control.disabled=sinExperiencia;});if(!sinExperiencia)el('confirmAgregarExperiencia').disabled=experiencias.length>=5;updateVisiblePreview();}
+ el('confirmSinExperiencia').addEventListener('change',actualizarEstadoExperiencia);
+ el('confirmAgregarExperiencia').addEventListener('click',()=>{if(el('confirmSinExperiencia').checked||experiencias.length>=5)return;experiencias.push(experienciaVacia());renderExperiences();actualizarEstadoExperiencia();});
  el('confirmFoto').addEventListener('change',()=>{const file=el('confirmFoto').files[0];if(file&&(file.size>2*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))){el('confirmFoto').value='';message('Selecciona una foto JPG, PNG o WebP de hasta 2 MB.',true);}showPhoto();updateVisiblePreview();});
  el('confirmRevisar').addEventListener('click',preview);
  el('confirmCerrarPreview').addEventListener('click',()=>{el('confirmPreviewPane').classList.add('hidden');el('confirmRevisar').setAttribute('aria-expanded','false');el('confirmRevisar').focus();});

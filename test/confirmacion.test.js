@@ -64,7 +64,24 @@ test('guardado de ficha no cambia inscripción ni campos reservados del partido'
  }finally{pool.connect=original;}
 });
 
-const nuevoBody={codigo_invitacion:'ABCD-1234-ABCD-1234',registro:{nombre:'Ma. José',apellido_paterno:'García',apellido_materno:'López',curp:'',edad:'34',telefono:'5512345678',correo_electronico:'persona@example.com',distrito_numero:'1',seccion_electoral:'1234',referente_nombre:'Ana',referente_apellido_paterno:'Pérez',referente_apellido_materno:''},ficha:{nivel_estudios:'licenciatura',otro_nivel:'',estatus_estudios:'titulado',cursos:'Taller',experiencias:[{puesto:'Coordinadora',institucion:'Instituto',periodo_inicio:'2020-01',periodo_fin:null}]}};
+test('la ficha exige una experiencia o la declaración sin experiencia laboral',async()=>{
+ const original=pool.connect,queries=[];let conexiones=0;
+ pool.connect=async()=>{conexiones++;return {query:async(sql,params)=>{queries.push({sql,params});return {rows:[]};},release(){}};};
+ const base={nivel_estudios:'licenciatura',otro_nivel:'',estatus_estudios:'concluido',cursos:'',experiencias:[]};
+ try{
+  const incompleta=response();let error;
+  await handler('put','/ficha')({inscripcionId:50,body:{...base,sin_experiencia_laboral:false}},incompleta.res,e=>{error=e;});
+  assert.ifError(error);assert.equal(incompleta.state.status,400);assert.equal(conexiones,0);
+  const declarada=response();
+  await handler('put','/ficha')({inscripcionId:50,body:{...base,sin_experiencia_laboral:true}},declarada.res,e=>{error=e;});
+  assert.ifError(error);assert.equal(declarada.state.body.ok,true);
+  const ficha=queries.find(q=>q.sql.includes('INSERT INTO fichas_curriculares'));
+  assert.equal(ficha.params.at(-1),true);
+  assert.equal(queries.some(q=>q.sql.includes('INSERT INTO experiencias_laborales')),false);
+ }finally{pool.connect=original;}
+});
+
+const nuevoBody={codigo_invitacion:'ABCD-1234-ABCD-1234',registro:{nombre:'Ma. José',apellido_paterno:'García',apellido_materno:'López',curp:'',edad:'34',telefono:'5512345678',correo_electronico:'persona@example.com',distrito_numero:'1',seccion_electoral:'1234',referente_nombre:'Ana',referente_apellido_paterno:'Pérez',referente_apellido_materno:''},ficha:{nivel_estudios:'licenciatura',otro_nivel:'',estatus_estudios:'titulado',cursos:'Taller',sin_experiencia_laboral:false,experiencias:[{puesto:'Coordinadora',institucion:'Instituto',periodo_inicio:'2020-01',periodo_fin:null}]}};
 const activa={id:13,estado:'pendiente',vence_en:new Date('2030-01-01'),max_usos:null,usos:2,correo_autorizado:null,eliminado_en:null};
 
 test('el nombre del nuevo registro admite apóstrofes y rechaza números',async()=>{

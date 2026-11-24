@@ -5,12 +5,14 @@ CREATE TABLE IF NOT EXISTS fichas_curriculares (
  nivel_estudios VARCHAR(100) NOT NULL,
  estatus_estudios VARCHAR(12) NOT NULL CHECK (estatus_estudios IN ('inconcluso','concluido','titulado')),
  cursos TEXT NOT NULL DEFAULT '',
+ sin_experiencia_laboral BOOLEAN NOT NULL DEFAULT false,
  foto_archivo VARCHAR(80),
  cargo_partido VARCHAR(150),
  area_adscripcion VARCHAR(150),
  fecha_ingreso DATE,
  actualizado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE fichas_curriculares ADD COLUMN IF NOT EXISTS sin_experiencia_laboral BOOLEAN NOT NULL DEFAULT false;
 CREATE TABLE IF NOT EXISTS experiencias_laborales (
  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  inscripcion_id BIGINT NOT NULL REFERENCES inscripciones(id) ON DELETE CASCADE,

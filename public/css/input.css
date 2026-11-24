@@ -285,6 +285,14 @@ body:has(#loginVista:not(.hidden)) > header {
 #confirmacionVista .confirm-experiences { display:grid; gap:1rem; margin-bottom:.8rem; }
 #confirmacionVista .confirm-experience { padding:1rem; border:1px solid #e8dfd6; border-radius:.6rem; background:white; }
 #confirmacionVista .confirm-experience h3 { font-size:.9rem; font-weight:800; }
+#confirmacionVista .confirm-experience-intro { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.65rem 1rem; margin:.35rem 0 1rem; }
+#confirmacionVista .confirm-experience-intro p { margin:0; }
+#confirmacionVista .confirm-card .confirm-checkbox { display:inline-flex; align-items:center; gap:.65rem; min-height:44px; margin:0; padding:.35rem .75rem; border:1px solid #d8c9bb; border-radius:.55rem; background:#fff; cursor:pointer; }
+#confirmacionVista .confirm-card .confirm-checkbox input { inline-size:1.25em; aspect-ratio:1; margin:0; accent-color:var(--confirm-wine); cursor:pointer; }
+#confirmacionVista .confirm-card .confirm-checkbox input:focus-visible { outline:2px solid var(--confirm-gold); outline-offset:3px; }
+#confirmacionVista .confirm-card .confirm-checkbox span { font-size:.88rem; font-weight:750; color:#4e1223; }
+#confirmacionVista #confirmExperienciaFields { transition:opacity .18s ease; }
+#confirmacionVista #confirmExperienciaFields.is-disabled { opacity:.48; }
 #confirmacionVista .confirm-remove { color:#8a263c; font-size:.8rem; font-weight:700; text-decoration:underline; }
 #confirmacionVista .confirm-muted { color:#675d59; font-weight:500; }
 #confirmacionVista .confirm-photo-label { color:#4e1223; font-size:.94rem; font-weight:800; line-height:1.5; }
