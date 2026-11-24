@@ -20,12 +20,30 @@
   .ordenar-columna { @apply whitespace-nowrap font-semibold hover:underline focus-visible:underline; }
   .ordenar-columna span { @apply ml-1; }
   .panel-nav { @apply flex flex-wrap gap-2 rounded-xl bg-white p-2 border border-slate-200; }
+  .access-tabs { @apply grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 mb-4; }
+  .access-tab { @apply rounded-lg px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-dorado; }
+  .access-tab.active { @apply bg-guinda text-white hover:bg-guinda; }
+  .access-form.hidden { display: none; }
+  .responsable-progress { @apply mt-5 border-t border-slate-200 pt-4; max-width: 36rem; }
+  .responsable-progress-heading { @apply flex items-baseline justify-between gap-3 text-sm font-bold text-slate-600; }
+  .responsable-progress-heading strong { @apply text-2xl font-extrabold text-guinda; font-variant-numeric: tabular-nums; }
+  .responsable-progress-track { @apply mt-2 overflow-hidden rounded-full bg-rose-100; height: 0.75rem; }
+  .responsable-progress-fill { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--institution-wine),#9a3d59,#bc955c); }
+  .responsable-progress p { @apply mt-2 text-xs text-slate-500; }
   .panel-tab { @apply rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100; }
   .panel-tab.active { @apply bg-guinda text-white; }
   .metricas-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 1rem; overflow-y: auto; }
   .metricas-grid.is-scrollable { overscroll-behavior: contain; scrollbar-gutter: stable; }
   .metrica-card { @apply rounded-xl border border-slate-200 p-4 text-center; }
-  .metrica-ring { width: 7rem; height: 7rem; margin: 0 auto 1rem; border-radius: 50%; background: conic-gradient(#6a1c32 var(--progress),#e2e8f0 0); display: grid; place-items: center; }
+  .metric-name-button { @apply font-bold text-guinda underline decoration-dorado underline-offset-4 hover:text-rose-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dorado; }
+  .codes-list { @apply mt-4 grid gap-3 overflow-auto; max-height: min(48vh,24rem); }
+  .codes-item { @apply rounded-xl border border-slate-200 bg-slate-50 p-3; }
+  .codes-item strong { @apply block break-words text-sm text-slate-900; }
+  .codes-meta { @apply mt-1 text-xs text-slate-500; }
+  .codes-value { @apply mt-3 block break-all rounded-lg border border-dorado bg-white p-2 font-mono font-bold text-guinda; }
+  .codes-copy { @apply mt-2 rounded-lg px-3 py-2 text-xs font-bold text-guinda underline hover:bg-rose-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-dorado; }
+  .codes-unavailable { @apply mt-3 text-xs text-slate-600; }
+  .metrica-ring { width: 7rem; height: 7rem; margin: 0 auto 1rem; border-radius: 50%; background: conic-gradient(var(--institution-wine) var(--progress),#e2e8f0 0); display: grid; place-items: center; }
   .metrica-ring span { @apply flex h-20 w-20 items-center justify-center rounded-full bg-white font-bold text-guinda; }
   .report-controls { @apply flex flex-wrap items-end gap-3; }
   .report-controls label { min-width: min(100%,18rem); flex: 1; }
@@ -43,6 +61,10 @@
   .cots-dialog-danger { @apply rounded-lg bg-red-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:opacity-50; }
   .cots-dialog-cancel { @apply rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dorado; }
   .cots-dialog .swal2-input { @apply mx-0 mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-base shadow-none focus:border-dorado focus:shadow-none; height: 3rem; }
+  .cots-dialog-fields { @apply mt-4 grid gap-2; }
+  .cots-dialog-fields label { @apply mt-2 block text-sm font-bold text-slate-800; }
+  .cots-dialog-fields small { @apply text-xs leading-5 text-slate-500; }
+  .cots-dialog-field { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dorado; min-height: 3rem; }
   .cots-dialog .swal2-validation-message { @apply rounded-lg bg-red-50 text-sm text-red-800; }
   .cots-dialog-eyebrow { @apply mb-3 block text-xs font-extrabold uppercase tracking-widest text-dorado; }
   .cots-dialog-name { @apply mt-2 block break-words rounded-lg bg-slate-50 px-3 py-2 font-bold text-slate-900; }
@@ -54,3 +76,252 @@
   .cots-dialog-option small { @apply block text-xs leading-5 text-slate-600; }
   .cots-dialog-warning { @apply mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800; }
 }
+
+:root {
+  --institution-wine: #691C32;
+  --institution-wine-deep: #4E1223;
+  --institution-gold: #BC955C;
+  --institution-gold-soft: #DDC9A3;
+  --institution-paper: #FAF8F5;
+  --surface-input: #FAF8F5;
+  --access-text-primary: #4E1223;
+}
+
+body:has(#loginVista:not(.hidden)) {
+  background: radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--institution-gold-soft) 22%, transparent), transparent 34%), var(--institution-paper);
+}
+
+body:has(#loginVista:not(.hidden)) > header {
+  display: none;
+}
+
+#loginVista {
+  container: access / inline-size;
+  max-inline-size: 70rem;
+  margin-inline: auto;
+  padding-block: clamp(1rem, 4vw, 3.25rem);
+}
+
+#loginVista .access-layout {
+  display: grid;
+  min-inline-size: 0;
+  border: 1px solid color-mix(in srgb, var(--institution-wine) 12%, white);
+  border-radius: 1.35rem;
+  background: white;
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--institution-wine-deep) 6%, transparent), 0 24px 60px color-mix(in srgb, var(--institution-wine-deep) 12%, transparent);
+}
+
+#loginVista .access-editorial {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.5rem;
+  min-inline-size: 0;
+  padding: clamp(1.5rem, 4cqi, 3rem);
+  border-radius: 1.3rem 1.3rem 0 0;
+  color: white;
+  background:
+    radial-gradient(circle at 95% 10%, color-mix(in srgb, var(--institution-gold) 17%, transparent), transparent 36%),
+    repeating-linear-gradient(145deg, transparent 0 24px, color-mix(in srgb, var(--institution-gold-soft) 5%, transparent) 25px 26px),
+    linear-gradient(155deg, var(--institution-wine), var(--institution-wine-deep));
+}
+
+#loginVista .access-editorial::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 1.5rem;
+  inset-block-start: 5.5rem;
+  inline-size: min(46%, 15rem);
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--institution-gold-soft) 24%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+#loginVista .access-editorial-top,
+#loginVista .access-editorial-foot { display: flex; align-items: center; gap: .8rem; position: relative; z-index: 1; }
+#loginVista .access-seal { display: grid; place-items: center; inline-size: 2.55rem; block-size: 2.55rem; border: 1px solid var(--institution-gold); border-radius: 50%; color: var(--institution-gold-soft); font-family: Georgia, serif; font-size: 1.05rem; letter-spacing: -.08em; }
+#loginVista .access-edition { color: var(--institution-gold-soft); font-size: .65rem; font-weight: 700; line-height: 1.5; letter-spacing: .13em; text-transform: uppercase; }
+#loginVista .access-editorial-copy { position: relative; z-index: 1; max-inline-size: 29rem; }
+#loginVista .access-kicker { display: block; color: var(--institution-gold); font-size: .7rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+#loginVista .access-editorial .access-kicker { color: var(--institution-gold-soft); }
+#loginVista .access-editorial h2 { margin-block: 1rem; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(2.15rem, 4.9cqi, 3.85rem); font-weight: 400; line-height: 1.08; letter-spacing: -.04em; text-wrap: balance; }
+#loginVista .access-editorial p { max-inline-size: 29rem; color: color-mix(in srgb, white 82%, var(--institution-gold-soft)); font-size: .91rem; line-height: 1.8; text-wrap: pretty; }
+#loginVista .access-editorial-foot { color: var(--institution-gold-soft); font-size: .66rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+#loginVista .access-foot-rule { inline-size: 2rem; block-size: 1px; background: var(--institution-gold); }
+#loginVista .access-foot-index { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+
+#loginVista .access-card { min-inline-size: 0; padding: clamp(1.5rem, 4.3cqi, 3.5rem); border-block-start: 4px solid var(--institution-gold); border-radius: 0 0 1.3rem 1.3rem; background: linear-gradient(180deg, white, var(--institution-paper)); }
+#loginVista .access-card-heading h1 { margin-block: .35rem .4rem; color: var(--institution-wine-deep); font-family: Georgia, 'Times New Roman', serif; font-size: clamp(2.5rem, 5cqi, 3.7rem); font-weight: 400; line-height: 1; letter-spacing: -.04em; }
+#loginVista .access-card-heading p { display: grid; align-items: center; min-block-size: 2.8rem; color: #685f5b; font-size: .9rem; line-height: 1.45; }
+#loginVista .access-card-heading p span { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity .24s ease, visibility .24s ease; }
+#loginVista .access-card-heading .access-context-admin,
+#loginVista:has(#tabResponsable[aria-selected="true"]) .access-card-heading .access-context-responsable { opacity: 1; visibility: visible; }
+#loginVista:has(#tabResponsable[aria-selected="true"]) .access-card-heading .access-context-admin { opacity: 0; visibility: hidden; }
+#loginVista .access-tabs { position: relative; isolation: isolate; margin-block: 2rem 1.7rem; padding: .3rem; gap: 0; border: 1px solid color-mix(in srgb, var(--institution-wine) 11%, white); border-radius: .8rem; background: color-mix(in srgb, var(--institution-paper) 86%, var(--institution-gold-soft)); }
+#loginVista .access-tabs::before { content: ""; position: absolute; z-index: -1; inset-block: .3rem; inset-inline-start: .3rem; inline-size: calc((100% - .6rem) / 2); border: 1px solid color-mix(in srgb, var(--institution-wine) 10%, white); border-radius: .55rem; background: white; box-shadow: 0 2px 9px color-mix(in srgb, var(--institution-wine-deep) 9%, transparent); transform: translateX(0); transition: transform .32s cubic-bezier(.2,.8,.2,1); }
+#loginVista .access-tabs:has(#tabResponsable[hidden]) { grid-template-columns: 1fr; }
+#loginVista .access-tabs:has(#tabResponsable[hidden])::before { inline-size: calc(100% - .6rem); }
+#loginVista #tabResponsable[hidden], #loginVista .access-foot-index[hidden] { display: none; }
+#loginVista .access-tabs:has(#tabResponsable[aria-selected="true"])::before { transform: translateX(100%); }
+#loginVista .access-tab { min-block-size: 2.8rem; padding: .65rem .5rem; border-radius: .55rem; color: #756967; font-size: .8rem; transition: color .2s ease, background-color .2s ease; }
+#loginVista .access-tab:hover:not(.active) { background: color-mix(in srgb, var(--institution-gold-soft) 18%, transparent); color: var(--institution-wine); }
+#loginVista .access-tab.active { background: transparent; color: var(--institution-wine-deep); }
+#loginVista .access-tab:focus-visible,
+#loginVista .access-reveal:focus-visible,
+#loginVista .access-submit:focus-visible { outline: 3px solid var(--institution-gold); outline-offset: 3px; }
+#loginVista .access-form { display: grid; gap: 1.15rem; }
+#loginVista .access-form.hidden { display: none; }
+#loginVista .access-field { min-inline-size: 0; }
+#loginVista .access-field label { display: block; margin-block-end: .45rem; color: var(--institution-wine-deep); font-size: .78rem; font-weight: 700; }
+#loginVista .access-field .field { min-block-size: 3.15rem; border: 1px solid color-mix(in srgb, var(--institution-wine) 19%, white); border-radius: .65rem; background: var(--surface-input); color: var(--access-text-primary); font-size: .9rem; transition: border-color .2s ease, box-shadow .2s ease; }
+#loginVista .access-field .field::placeholder { color: #978d89; }
+#loginVista .access-field .field:hover { border-color: color-mix(in srgb, var(--institution-wine) 42%, white); }
+#loginVista .access-field .field:focus-visible { outline: 2px solid var(--institution-gold); outline-offset: 2px; border-color: var(--institution-gold); box-shadow: 0 0 0 4px color-mix(in srgb, var(--institution-gold-soft) 35%, transparent); }
+#loginVista .access-field .field:user-invalid { border-color: #a53f46; background: color-mix(in srgb, #a53f46 5%, white); }
+#loginVista .access-field .field:user-valid { border-color: color-mix(in srgb, #2f7555 60%, white); }
+#loginVista .access-field .field:is(:-webkit-autofill, :autofill),
+#loginVista .access-field .field:is(:-webkit-autofill, :autofill):hover,
+#loginVista .access-field .field:is(:-webkit-autofill, :autofill):focus {
+  box-shadow: inset 0 0 0 2px var(--institution-gold-soft), 0 0 0 1000px var(--surface-input) inset;
+  -webkit-text-fill-color: var(--access-text-primary);
+  caret-color: var(--access-text-primary);
+}
+#loginVista .access-field .field:is(:-webkit-autofill, :autofill):focus-visible {
+  box-shadow: inset 0 0 0 2px var(--institution-gold-soft), 0 0 0 1000px var(--surface-input) inset, 0 0 0 4px color-mix(in srgb, var(--institution-gold-soft) 35%, transparent);
+}
+#loginVista .access-password { position: relative; }
+#loginVista .access-password .field { padding-inline-end: 5.5rem; }
+#loginVista .access-reveal { position: absolute; inset-inline-end: .4rem; inset-block-start: 50%; transform: translateY(-50%); min-inline-size: 4.55rem; min-block-size: 2.35rem; border-radius: .45rem; color: var(--institution-wine); font-size: .72rem; font-weight: 800; }
+#loginVista .access-reveal:hover { background: color-mix(in srgb, var(--institution-gold-soft) 28%, white); }
+#loginVista .access-error { display: none; margin-block-start: .4rem; color: #9d303b; font-size: .72rem; line-height: 1.4; }
+#loginVista .access-field:has(.field:user-invalid) .access-error { display: block; }
+#loginVista .access-submit { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-block-size: 3.25rem; margin-block-start: .35rem; padding-inline: 1.25rem; border-radius: .65rem; background: var(--institution-wine); box-shadow: 0 4px 0 var(--institution-wine-deep), 0 10px 22px color-mix(in srgb, var(--institution-wine-deep) 17%, transparent); font-size: .84rem; text-align: start; }
+#loginVista .access-submit:hover:not(:disabled) { background: color-mix(in srgb, var(--institution-wine) 82%, var(--institution-wine-deep)); }
+#loginVista .access-submit span { font-size: 1.2rem; }
+#loginVista .access-help-row { margin-block-start: 1.7rem; }
+#loginVista .access-help-trigger { min-block-size: 2.75rem; padding-inline: .25rem; color: var(--institution-wine); font-size: .76rem; font-weight: 700; text-decoration: underline; text-decoration-color: var(--institution-gold); text-underline-offset: .25rem; }
+#loginVista .access-help-trigger:hover { color: var(--institution-wine-deep); text-decoration-thickness: 2px; }
+#loginVista .access-help-trigger:focus-visible,
+#loginVista .access-help-close:focus-visible { outline: 3px solid var(--institution-gold); outline-offset: 2px; border-radius: .25rem; }
+#accessHelp[popover] { inline-size: min(20rem, calc(100dvw - 2rem)); padding: 1.2rem; border: 1px solid color-mix(in srgb, var(--institution-wine) 16%, white); border-block-start: 3px solid var(--institution-gold); border-radius: .8rem; background: var(--institution-paper); color: var(--access-text-primary); box-shadow: 0 12px 32px color-mix(in srgb, var(--institution-wine-deep) 20%, transparent); opacity: 0; transition: opacity .22s ease, transform .22s ease, display .22s, overlay .22s; transition-behavior: allow-discrete; }
+#accessHelp:popover-open { opacity: 1; }
+#accessHelp strong { display: block; font-size: .9rem; }
+#accessHelp p { margin-block: .6rem 1rem; color: #685f5b; font-size: .79rem; line-height: 1.6; }
+#accessHelp .access-help-close { min-block-size: 2.5rem; padding-inline: .8rem; border: 1px solid var(--institution-gold-soft); border-radius: .45rem; color: var(--institution-wine); font-size: .75rem; font-weight: 700; }
+#accessHelp .access-help-close:hover { background: color-mix(in srgb, var(--institution-gold-soft) 23%, white); }
+
+@supports (position-area: block-end) {
+  #accessHelp[popover] { inset: auto; margin: 0; position-area: block-end span-inline-start; position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline; }
+}
+
+@starting-style {
+  #accessHelp:popover-open { opacity: 0; }
+}
+
+@container access (min-width: 48rem) {
+  #loginVista .access-layout { grid-template-columns: minmax(0, .96fr) minmax(0, 1.04fr); }
+  #loginVista .access-editorial { min-block-size: 38rem; border-radius: 1.3rem 0 0 1.3rem; }
+  #loginVista .access-card { border-block-start: 0; border-inline-start: 4px solid var(--institution-gold); border-radius: 0 1.3rem 1.3rem 0; }
+}
+
+@container access (max-width: 33rem) {
+  #loginVista .access-editorial { gap: 1.1rem; padding: 1.4rem; }
+  #loginVista .access-editorial-copy h2 { font-size: clamp(1.9rem, 8cqi, 2.6rem); }
+  #loginVista .access-editorial p { font-size: .8rem; line-height: 1.55; }
+  #loginVista .access-editorial-foot { display: none; }
+  #loginVista .access-card { padding: 1.5rem; }
+  #loginVista .access-tabs { margin-block: 1.5rem; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #loginVista .access-form:not(.hidden) { animation: access-enter .28s ease-out both; }
+  @keyframes access-enter { from { opacity: .55; transform: translateY(.35rem); } to { opacity: 1; transform: translateY(0); } }
+  #accessHelp[popover] { transform: translateY(.35rem); }
+  #accessHelp:popover-open { transform: translateY(0); }
+  @starting-style { #accessHelp:popover-open { transform: translateY(.35rem); } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #loginVista .access-tabs::before { transition: none; }
+  #loginVista .access-card-heading p span { transition: none; }
+  #accessHelp[popover] { transition-duration: .1s; }
+}
+
+/* Ficha curricular de una inscripción existente */
+#confirmacionVista { --confirm-wine:#691c32; --confirm-gold:#bc955c; --confirm-paper:#faf8f5; max-width: 58rem; margin-inline:auto; container-type:inline-size; color:#342b2c; }
+#confirmacionVista .confirm-hero { padding:clamp(1.5rem,4cqi,3rem); border-radius:1.25rem 1.25rem 0 0; color:white; background:linear-gradient(125deg,#4e1223,#691c32); box-shadow:0 12px 30px #4e122323; }
+#confirmacionVista .confirm-hero h1 { margin:.4rem 0; font-family:Georgia,serif; font-size:clamp(2rem,6cqi,3.25rem); line-height:1.12; }
+#confirmacionVista .confirm-hero p { max-width:37rem; line-height:1.6; color:#f4e7e9; }
+#confirmacionVista .confirm-kicker { color:var(--confirm-gold); font-size:.74rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
+#confirmacionVista .confirm-steps { display:flex; flex-wrap:wrap; gap:.4rem; padding:.9rem 1rem; border:1px solid #e8dfd6; background:#f2eee8; }
+#confirmacionVista .confirm-steps span { padding:.4rem .7rem; border-radius:2rem; color:#675c58; font-size:.76rem; font-weight:700; }
+#confirmacionVista .confirm-steps .active { background:var(--confirm-wine); color:white; }
+#confirmacionVista .confirm-card { margin-block:1.1rem; padding:clamp(1.2rem,3cqi,2rem); border:1px solid #e8dfd6; border-top:3px solid var(--confirm-gold); border-radius:.8rem; background:var(--confirm-paper); box-shadow:0 4px 12px #4e12230a,0 16px 35px #4e12230e; }
+#confirmacionVista .confirm-card h2 { margin:0 0 .5rem; font-family:Georgia,serif; font-size:1.65rem; color:#4e1223; }
+#confirmacionVista .confirm-card p { color:#645a58; font-size:.9rem; line-height:1.55; }
+#confirmacionVista .confirm-card label { display:block; font-size:.84rem; font-weight:700; color:#4e1223; }
+#confirmacionVista .field { margin-top:.4rem; min-height:2.8rem; background:#fffdfa; color:#342b2c; }
+#confirmacionVista .field:focus-visible,#confirmacionVista button:focus-visible { outline:2px solid var(--confirm-gold); outline-offset:2px; }
+#confirmacionVista .field:user-invalid { border-color:#ad4951; }
+#confirmacionVista form>button,#confirmacionVista .confirm-full button { margin-top:1.1rem; }
+#confirmacionVista .confirm-grid { display:grid; grid-template-columns:1fr; gap:1rem; }
+#confirmacionVista .confirm-full { grid-column:1/-1; }
+#confirmacionVista .confirm-heading { display:flex; align-items:start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+#confirmacionVista .confirm-heading h2,#confirmacionVista .confirm-heading h3 { margin:.2rem 0; }
+#confirmacionVista .confirm-heading>span { color:#756965; font-size:.76rem; }
+#confirmacionVista .confirm-new-choice { display:flex; align-items:center; flex-wrap:wrap; gap:.7rem 1rem; margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e0d5c9; }
+#confirmacionVista .confirm-new-choice p { margin:0; }
+#confirmacionVista .confirm-new-choice #confirmNuevoNoDisponible { width:100%; color:#76584d; }
+#confirmacionVista .confirm-subheading { color:#4e1223; font-size:.95rem; font-weight:800; }
+#confirmacionVista #confirmNuevoFields { margin-top:.3rem; }
+#confirmacionVista #confirmNuevoFields>p { margin-bottom:1rem; }
+#confirmacionVista .confirm-data { display:grid; grid-template-columns:minmax(7rem,12rem) minmax(0,1fr); gap:.45rem 1rem; margin-top:1.2rem; font-size:.86rem; }
+#confirmacionVista .confirm-data dt { color:#675d59; font-weight:700; }
+#confirmacionVista .confirm-data dd { min-width:0; overflow-wrap:anywhere; color:#31282a; }
+#confirmacionVista fieldset { margin-top:1.6rem; padding-top:1.2rem; border-top:1px solid #e0d5c9; }
+#confirmacionVista legend { padding-right:.7rem; color:#4e1223; font-family:Georgia,serif; font-size:1.22rem; }
+#confirmacionVista .confirm-experiences { display:grid; gap:1rem; margin-bottom:.8rem; }
+#confirmacionVista .confirm-experience { padding:1rem; border:1px solid #e8dfd6; border-radius:.6rem; background:white; }
+#confirmacionVista .confirm-experience h3 { font-size:.9rem; font-weight:800; }
+#confirmacionVista .confirm-remove { color:#8a263c; font-size:.8rem; font-weight:700; text-decoration:underline; }
+#confirmacionVista .confirm-muted { color:#675d59; font-weight:500; }
+#confirmacionVista textarea { width:100%; resize:vertical; }
+#confirmacionVista .confirm-photo img { width:9rem; height:11rem; object-fit:cover; margin-top:.8rem; border:2px solid var(--confirm-gold); border-radius:.5rem; }
+#confirmacionVista .confirm-preview-pane { margin-block:1.1rem; }
+#confirmacionVista .confirm-preview-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:1.2rem 1.5rem; border:1px solid #e8dfd6; border-radius:.8rem .8rem 0 0; background:#faf8f5; }
+#confirmacionVista .confirm-preview-toolbar h2 { margin:.25rem 0 0; color:#4e1223; font-family:Georgia,serif; font-size:1.5rem; }
+#confirmacionVista .curriculum-sheet { width:100%; padding:clamp(1rem,3.5cqi,2.5rem); border:1px solid #dfd9d1; border-top:0; border-radius:0 0 .8rem .8rem; background:white; box-shadow:0 12px 28px #4e122315; color:#1e1e1e; font-family:Arial,Helvetica,sans-serif; }
+#confirmacionVista .curriculum-header { display:grid; grid-template-columns:minmax(0, 45%) 1px minmax(0, 1fr); align-items:center; column-gap:clamp(.65rem,3cqi,2rem); min-height:6.5rem; margin-bottom:1.3rem; padding-bottom:.55rem; border-bottom:1px solid #df9b96; }
+#confirmacionVista .curriculum-header h3 { margin:0; color:#858585; font-size:clamp(.78rem,2.6cqi,1.55rem); font-weight:800; letter-spacing:0; white-space:nowrap; }
+#confirmacionVista .curriculum-header-divider { align-self:stretch; width:1px; min-height:4.5rem; background:#df9b96; }
+#confirmacionVista .curriculum-brand { display:flex; flex-direction:column; align-items:start; width:min(17rem,100%); }
+#confirmacionVista .curriculum-brand img:first-child { display:block; width:100%; height:auto; opacity:.58; }
+#confirmacionVista .curriculum-brand img:last-child { display:block; width:100%; height:auto; margin-top:-.12rem; opacity:.5; }
+#confirmacionVista .curriculum-name-row { display:grid; grid-template-columns:6rem minmax(0,1fr); align-items:center; gap:.8rem; margin-bottom:1.15rem; }
+#confirmacionVista .curriculum-name-row .curriculum-table-scroll { margin-bottom:0; }
+#confirmacionVista .curriculum-photo { width:6rem; height:6rem; display:grid; place-items:center; margin:0; border:1px solid #555; background:#f4f4f4; }
+#confirmacionVista .curriculum-photo img { width:100%; height:100%; object-fit:cover; }
+#confirmacionVista .curriculum-table-scroll { max-width:100%; overflow-x:auto; margin-bottom:1.15rem; scrollbar-gutter:stable; }
+#confirmacionVista .curriculum-table-scroll:focus-visible { outline:2px solid var(--confirm-gold); outline-offset:2px; }
+#confirmacionVista .curriculum-table { width:100%; min-width:30rem; border-collapse:collapse; table-layout:fixed; font-size:.8rem; }
+#confirmacionVista .curriculum-name-row .curriculum-table { min-width:25rem; }
+#confirmacionVista .curriculum-table caption { padding:.55rem .65rem; border:1px solid #303030; border-bottom:0; color:#111; background:#f0f0f0; font-size:.9rem; font-weight:800; text-align:center; letter-spacing:.02em; }
+#confirmacionVista .curriculum-table th,#confirmacionVista .curriculum-table td { padding:.55rem .65rem; border:1px solid #555; overflow-wrap:anywhere; vertical-align:middle; text-align:center; line-height:1.5; }
+#confirmacionVista .curriculum-table th { position:sticky; top:0; background:#fafafa; color:#161616; font-size:.74rem; font-weight:700; }
+#confirmacionVista .curriculum-table th small { display:block; margin-top:.2rem; color:#555; font-size:.68rem; font-weight:400; text-transform:none; }
+#confirmacionVista .curriculum-table td { min-height:2rem; height:2.1rem; white-space:pre-wrap; }
+#confirmacionVista .curriculum-table-scroll[aria-label="Formación académica"] th:first-child { width:64%; }
+#confirmacionVista .curriculum-table-scroll[aria-label="Cursos, talleres o diplomados"] td { height:5rem; }
+@container (max-width:38rem) { #confirmacionVista .curriculum-header { min-height:4.5rem; } #confirmacionVista .curriculum-header-divider { min-height:3.5rem; } #confirmacionVista .curriculum-name-row { grid-template-columns:minmax(0,1fr); } #confirmacionVista .curriculum-photo { justify-self:start; } }
+@container (max-width:30rem) { #confirmacionVista .curriculum-header h3 { white-space:normal; } }
+#confirmacionVista .confirm-actions { display:flex; flex-wrap:wrap; gap:.7rem; margin-top:1.5rem; }
+#confirmacionVista .confirm-message { margin-top:1rem; padding:1rem; border-radius:.6rem; background:#e5f3e9; color:#205638; font-size:.9rem; font-weight:600; }
+#confirmacionVista .confirm-message.is-error { background:#fbe8e7; color:#8b2331; }
+#confirmacionVista .confirm-success { display:grid; justify-items:center; gap:1.25rem; padding-block:clamp(2rem,6cqi,4rem); text-align:center; }
+#confirmacionVista .confirm-success img { width:6rem; height:6rem; object-fit:contain; }
+#confirmacionVista .confirm-success h2 { max-width:30rem; margin:0; }
+#confirmacionVista .hidden { display:none; }
+@container (min-width:38rem) { #confirmacionVista .confirm-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@container (max-width:32rem) { #confirmacionVista .confirm-data { grid-template-columns:1fr; } #confirmacionVista .confirm-data dd { margin-bottom:.5rem; } #confirmacionVista .confirm-heading { flex-wrap:wrap; } }

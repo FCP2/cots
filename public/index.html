@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>PROPUESTA COTS | Registro individual</title>
+  <title>Registro individual</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/vendor/sweetalert2.min.css">
@@ -18,6 +18,7 @@
 </header>
 <main class="max-w-6xl mx-auto p-4 md:p-8">
  <div id="mensaje" class="hidden mb-4 rounded-lg p-3" role="alert"></div>
+ <section id="inviteDisabledVista" class="card max-w-2xl mx-auto hidden" aria-labelledby="inviteDisabledTitle"><h1 id="inviteDisabledTitle" class="text-2xl font-extrabold text-guinda">Este enlace de registro está temporalmente deshabilitado</h1><p class="mt-3 text-slate-600">Solicita al responsable el enlace vigente para completar tu ficha o crear un registro nuevo.</p></section>
  <section id="publico" class="max-w-3xl mx-auto hidden">
   <div class="card mb-5"><span class="font-bold text-guinda text-xs tracking-wider">INVITACIÓN</span><h2 class="text-2xl font-extrabold text-guinda mt-2">Registro</h2>
    <p class="mt-2">Te invita a registrarte: <strong id="invitador"></strong></p><p class="text-sm text-slate-600 mt-1" id="destinatario"></p>
@@ -26,15 +27,15 @@
   <div id="formVista" class="card"><h3 class="font-extrabold text-lg text-guinda mb-4">Datos</h3>
    <form id="inscripcionForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <label class="md:col-span-3"><span class="label">Código de invitación *</span><input class="field uppercase font-mono" name="codigo_invitacion" required maxlength="19" pattern="[A-Za-z0-9]{4}(-[A-Za-z0-9]{4}){3}" autocomplete="off" placeholder="XXXX-XXXX-XXXX-XXXX"></label>
-    <label><span class="label">Nombre(s) *</span><input class="field" name="nombre" required maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ. ]*" title="Usa letras, espacios y puntos; por ejemplo, Ma. José" autocomplete="given-name"></label>
-    <label><span class="label">Apellido paterno *</span><input class="field" name="apellido_paterno" required maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]*" title="Usa solo letras y espacios"></label>
-    <label><span class="label">Apellido materno</span><input class="field" name="apellido_materno" maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]*" title="Usa solo letras y espacios"></label>
+    <label><span class="label">Nombre(s) *</span><input class="field" name="nombre" required maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ.'’ ]*" title="Usa letras, espacios, apóstrofes y puntos; por ejemplo, Ma. José" autocomplete="given-name"></label>
+    <label><span class="label">Apellido paterno *</span><input class="field" name="apellido_paterno" required maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’ ]*" title="Usa letras, apóstrofes y espacios"></label>
+    <label><span class="label">Apellido materno</span><input class="field" name="apellido_materno" maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’ ]*" title="Usa letras, apóstrofes y espacios"></label>
     <label><span class="label">CURP (opcional)</span><input class="field uppercase font-mono" name="curp" minlength="18" maxlength="18" autocapitalize="characters" autocomplete="off" placeholder="18 caracteres si la conoces"></label>
     <label><span class="label">Edad *</span><input class="field" name="edad" required type="number" min="0" max="120"></label>
     <label><span class="label">Teléfono *</span><input class="field" name="telefono" required type="tel" inputmode="numeric" minlength="10" maxlength="10" pattern="[0-9]{10}" title="Escribe exactamente 10 dígitos numéricos" autocomplete="tel"></label>
     <label class="md:col-span-2"><span class="label">Correo electrónico *</span><input class="field" name="correo_electronico" required type="email" maxlength="254" autocomplete="email"></label>
     <label class="md:col-span-2"><span class="label">Distrito electoral federal *</span><select class="field" name="distrito_numero" required aria-describedby="distritoSeleccionado"><option value="">Selecciona un distrito</option></select><span id="distritoSeleccionado" class="selected-district" aria-live="polite"></span></label>
-    <label><span class="label">Sección electoral *</span><input class="field" name="seccion_electoral" type="text" required inputmode="numeric" minlength="1" maxlength="4" pattern="[0-9]{1,4}" title="Escribe de 1 a 4 dígitos numéricos" autocomplete="off"></label>
+    <label><span class="label">Sección electoral *</span><input class="field" name="seccion_electoral" type="text" required inputmode="numeric" minlength="4" maxlength="4" pattern="[0-9]{4}" title="Escribe exactamente 4 dígitos numéricos" autocomplete="off"></label>
     <div class="md:col-span-3 pt-3"><h4 class="font-bold text-guinda">Referente</h4><p class="text-xs text-slate-500">Escribe el nombre del referente correspondiente.</p></div>
     <label><span class="label">Nombre(s) del referente *</span><input class="field" name="referente_nombre" required maxlength="100"></label>
     <label><span class="label">Apellido paterno del referente *</span><input class="field" name="referente_apellido_paterno" required maxlength="100"></label>
@@ -49,8 +50,96 @@
   </div>
   <div id="exitoVista" class="card hidden text-center py-12" role="status"><img src="/assests/check.png" alt="" aria-hidden="true" class="mx-auto mb-3 h-24 w-24"><h2 class="text-2xl font-extrabold text-guinda">¡REGISTRO EXITOSO!</h2><p class="mt-3 text-lg">Tu información se ha registrado correctamente.</p></div>
  </section>
- <section id="loginVista" class="max-w-md mx-auto hidden"><div class="card"><h2 class="text-xl font-extrabold text-guinda mb-2">Acceso administrativo</h2>
-  <form id="loginForm" class="grid gap-3"><label><span class="label">Correo electrónico</span><input name="correo_electronico" class="field" type="email" required autocomplete="username"></label><label><span class="label">Llave personal</span><input name="llave" class="field" type="password" required autocomplete="current-password"></label><button id="loginSubmit" class="btn-primary" type="submit">Ingresar con mi llave</button></form></div></section>
+ <section id="confirmacionVista" class="confirm-shell hidden" aria-labelledby="confirmTitle">
+  <div class="confirm-hero"><h1 id="confirmTitle">Completa tu ficha</h1><p>Consulta una inscripción existente o crea un registro nuevo con tu código de invitación y completa la ficha curricular.</p></div>
+  <div id="confirmMessage" class="confirm-message hidden" role="status" aria-live="polite"></div>
+  <div id="confirmSteps" class="confirm-steps" aria-label="Progreso"><span id="confirmStep1" class="active">01 · Código</span><span id="confirmStep2">02 · Identificación</span><span id="confirmStep3">03 · Ficha y vista previa</span></div>
+  <section id="confirmSuccessPane" class="confirm-card confirm-success hidden" role="status" aria-live="polite" aria-labelledby="confirmSuccessTitle"><img src="/assests/check.png" width="96" height="96" alt="" aria-hidden="true"><h2 id="confirmSuccessTitle">Registro y ficha guardados correctamente.</h2><button id="confirmOtroRegistro" class="btn-primary" type="button">Registrar otra persona</button></section>
+  <div id="confirmCodigoPane" class="confirm-card"><h2>Código de invitación</h2><p>Escribe el código de invitación que te compartieron.</p>
+   <form id="confirmCodigoForm"><label for="confirmCodigo">Código de invitación</label><input id="confirmCodigo" name="codigo_invitacion" class="field" required maxlength="19" pattern="[A-Fa-f0-9]{4}(-[A-Fa-f0-9]{4}){3}" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX"><button class="btn-primary" type="submit">Continuar</button></form>
+  </div>
+  <div id="confirmIdentidadPane" class="confirm-card hidden"><div class="confirm-heading"><div><span class="confirm-kicker">Tu invitación</span><h2 id="confirmResponsable"></h2><p id="confirmEquipo"></p></div><button id="confirmCambiarCodigo" class="btn-secondary" type="button">Cambiar código</button></div>
+   <p>Escribe tus datos como aparecen en tu inscripción para localizarla. Si tu registro histórico no tiene sección, utiliza el teléfono registrado.</p>
+   <form id="confirmIdentidadForm" class="confirm-grid">
+    <label>Nombre(s)<input name="nombre" class="field" required maxlength="100" autocomplete="given-name"></label>
+    <label>Apellido paterno<input name="apellido_paterno" class="field" required maxlength="100" autocomplete="family-name"></label>
+    <label>Apellido materno<input name="apellido_materno" class="field" maxlength="100"></label>
+    <label>Sección electoral<input name="seccion_electoral" class="field" inputmode="numeric" minlength="1" maxlength="4" pattern="[0-9]{1,4}" autocomplete="off"></label>
+    <label>Teléfono registrado (solo si no tienes sección)<input name="telefono" class="field" type="tel" inputmode="numeric" minlength="10" maxlength="10" pattern="[0-9]{10}" autocomplete="tel"></label>
+    <div class="confirm-full"><button class="btn-primary" type="submit">Encontrar mi registro</button></div>
+   </form>
+   <div class="confirm-new-choice"><p>¿Aún no tienes una inscripción con este código?</p><button id="confirmNuevo" class="btn-secondary" type="button">Crear nuevo registro y ficha</button><p id="confirmNuevoNoDisponible" class="hidden">Este código solo permite completar fichas de registros existentes.</p></div>
+  </div>
+  <div id="confirmFichaPane" class="hidden confirm-workspace">
+   <div id="confirmDatosCard" class="confirm-card"><div class="confirm-heading"><div><span class="confirm-kicker">Inscripción encontrada</span><h2>Confirma tus datos</h2></div><button id="confirmSalir" class="btn-secondary" type="button">Cerrar consulta</button></div><p>Estos datos provienen de tu inscripción original. Si necesitas corregirlos, contacta al administrador.</p><dl id="confirmDatos" class="confirm-data"></dl></div>
+   <form id="confirmFichaForm" class="confirm-card">
+    <div class="confirm-heading"><div><span class="confirm-kicker">Ficha curricular</span><h2 id="confirmFichaHeading">Información complementaria</h2></div><button id="confirmVolverIdentidad" class="btn-secondary hidden" type="button">Volver a identificación</button></div>
+    <fieldset id="confirmNuevoFields" class="hidden" disabled><legend>Datos del nuevo registro</legend><p>El código de invitación ya quedó validado en el paso 01.</p><div class="confirm-grid">
+     <label>Nombre(s) *<input class="field" name="nombre" required maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ.'’ ]*" title="Usa letras, espacios, apóstrofes y puntos" autocomplete="given-name"></label>
+     <label>Apellido paterno *<input class="field" name="apellido_paterno" required maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’ ]*" title="Usa letras, apóstrofes y espacios" autocomplete="family-name"></label>
+     <label>Apellido materno<input class="field" name="apellido_materno" maxlength="100" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’ ]*" title="Usa letras, apóstrofes y espacios"></label>
+     <label>CURP (opcional)<input class="field uppercase" name="curp" maxlength="18" minlength="18" autocapitalize="characters" autocomplete="off"></label>
+     <label>Edad *<input class="field" name="edad" type="number" min="0" max="120" required></label>
+     <label>Teléfono *<input class="field" name="telefono" type="tel" inputmode="numeric" minlength="10" maxlength="10" pattern="[0-9]{10}" autocomplete="tel" required></label>
+     <label>Correo electrónico *<input class="field" name="correo_electronico" type="email" maxlength="254" autocomplete="email" required></label>
+     <label>Distrito electoral federal *<select id="confirmNuevoDistrito" class="field" name="distrito_numero" required><option value="">Selecciona un distrito</option></select><span id="confirmNuevoDistritoTexto" class="selected-district" aria-live="polite"></span></label>
+     <label>Sección electoral *<input class="field" name="seccion_electoral" type="text" inputmode="numeric" minlength="4" maxlength="4" pattern="[0-9]{4}" title="Escribe exactamente 4 dígitos numéricos" autocomplete="off" required></label>
+     <div class="confirm-full"><h3 class="confirm-subheading">Referente</h3></div>
+     <label>Nombre(s) del referente *<input class="field" name="referente_nombre" maxlength="100" required></label>
+     <label>Apellido paterno del referente *<input class="field" name="referente_apellido_paterno" maxlength="100" required></label>
+     <label>Apellido materno del referente<input class="field" name="referente_apellido_materno" maxlength="100"></label>
+    </div></fieldset>
+    <fieldset><legend>Experiencia laboral</legend><div id="confirmExperiencias" class="confirm-experiences"></div><button id="confirmAgregarExperiencia" class="btn-secondary" type="button">Agregar experiencia</button></fieldset>
+    <fieldset><legend>Formación académica</legend><div class="confirm-grid"><label>Nivel máximo de estudios<select id="confirmNivel" name="nivel_estudios" class="field" required><option value="">Selecciona un nivel</option><option>primaria</option><option>secundaria</option><option>preparatoria</option><option>bachillerato</option><option>licenciatura</option><option>maestría</option><option>doctorado</option><option value="otro">Otro</option></select></label><label id="confirmOtroNivelLabel" class="hidden">Especifica el nivel<input id="confirmOtroNivel" name="otro_nivel" class="field" maxlength="100"></label><label>Estatus<select name="estatus_estudios" class="field" required><option value="">Selecciona un estatus</option><option value="inconcluso">Inconcluso</option><option value="concluido">Concluido</option><option value="titulado">Titulado</option></select></label></div></fieldset>
+    <fieldset><legend>Cursos, talleres o diplomados</legend><label for="confirmCursos" class="confirm-muted">Describe los cursos que deseas agregar</label><textarea id="confirmCursos" name="cursos" class="field" rows="4" maxlength="5000"></textarea></fieldset>
+    <fieldset><legend>Fotografía</legend><label for="confirmFoto" class="confirm-muted">Selecciona una foto JPG, PNG o WebP de hasta 2 MB</label><input id="confirmFoto" class="field" type="file" accept="image/jpeg,image/png,image/webp"><div id="confirmFotoBox" class="confirm-photo hidden"><img id="confirmFotoPreview" alt="Vista previa de tu fotografía"></div></fieldset>
+    <div class="confirm-actions"><button id="confirmRevisar" class="btn-secondary" type="button">Vista previa</button><button id="confirmGuardar" class="btn-primary" type="submit">Guardar mi ficha</button></div>
+   </form>
+   <section id="confirmPreviewPane" class="confirm-preview-pane hidden" aria-labelledby="confirmPreviewTitle">
+    <div class="confirm-preview-toolbar"><div><span class="confirm-kicker">Antes de guardar</span><h2 id="confirmPreviewTitle">Vista previa de tu ficha</h2></div><button id="confirmCerrarPreview" class="btn-secondary" type="button">Cerrar vista previa</button></div>
+    <div class="curriculum-sheet">
+     <div class="curriculum-header"><div class="curriculum-brand"><img src="/assests/ficha-morena.jpeg" width="620" height="119" alt="Morena"><img src="/assests/ficha-morena-lema.png" width="558" height="69" alt="La esperanza de México"></div><span class="curriculum-header-divider" aria-hidden="true"></span><h3>FICHA CURRICULAR</h3></div>
+     <div class="curriculum-name-row"><figure class="curriculum-photo"><img id="confirmPreviewFoto" src="/assests/ficha-foto-placeholder.png" alt="Fotografía de la ficha"></figure><div class="curriculum-table-scroll" role="region" aria-label="Nombre completo" tabindex="0"><table class="curriculum-table"><caption>NOMBRE COMPLETO</caption><thead><tr><th scope="col">NOMBRE</th><th scope="col">APELLIDO 1</th><th scope="col">APELLIDO 2</th></tr></thead><tbody><tr id="confirmPreviewNombre"></tr></tbody></table></div></div>
+     <div class="curriculum-table-scroll" role="region" aria-label="Experiencia laboral" tabindex="0"><table class="curriculum-table"><caption>EXPERIENCIA LABORAL</caption><thead><tr><th scope="col">PUESTO</th><th scope="col">INSTITUCIÓN</th><th scope="col">PERIODO (mes/año)</th></tr></thead><tbody id="confirmPreviewExperiencias"></tbody></table></div>
+     <div class="curriculum-table-scroll" role="region" aria-label="Formación académica" tabindex="0"><table class="curriculum-table"><caption>FORMACIÓN ACADÉMICA</caption><thead><tr><th scope="col">NIVEL MÁXIMO DE ESTUDIOS <small>primaria, secundaria, preparatoria, bachillerato, licenciatura, maestría, doctorado, etc.</small></th><th scope="col">ESTATUS <small>inconcluso / concluido / titulado</small></th></tr></thead><tbody><tr id="confirmPreviewFormacion"></tr></tbody></table></div>
+     <div class="curriculum-table-scroll" role="region" aria-label="Cursos, talleres o diplomados" tabindex="0"><table class="curriculum-table"><caption>CURSOS, TALLERES O DIPLOMADOS</caption><tbody><tr id="confirmPreviewCursos"></tr></tbody></table></div>
+    </div>
+   </section>
+  </div>
+ </section>
+ <section id="loginVista" class="access-shell hidden" aria-label="Acceso al sistema">
+  <div class="access-layout">
+   <aside class="access-editorial" aria-labelledby="accessEditorialTitle">
+    <div class="access-editorial-top"><span class="access-seal" aria-hidden="true">RI</span><span class="access-edition">Estado de México<br>Registro individual</span></div>
+    <div class="access-editorial-copy"><span class="access-kicker">Plataforma de registro</span><h2 id="accessEditorialTitle">Una entrada clara a tu información.</h2><p id="accessContextDescription">Gestiona invitaciones, consulta inscripciones y da seguimiento a cada registro desde un solo espacio.</p></div>
+    <div class="access-editorial-foot"><span class="access-foot-rule" aria-hidden="true"></span><span>Acceso institucional</span><span class="access-foot-index" hidden>01 / 02</span></div>
+   </aside>
+   <div class="access-card">
+    <div class="access-card-heading"><span class="access-kicker">Área privada</span><h1>Acceso</h1><p id="accessContextTitle"><span class="access-context-admin">Ingresa al panel administrativo</span><span class="access-context-responsable" aria-hidden="true">Consulta y da seguimiento a tus registros</span></p></div>
+    <div class="access-tabs" role="tablist" aria-label="Tipo de acceso"><button id="tabAdmin" class="access-tab active" type="button" role="tab" aria-selected="true" aria-controls="loginForm" tabindex="0">Administrativo</button><button id="tabResponsable" class="access-tab" type="button" role="tab" aria-selected="false" aria-controls="responsableLoginForm" tabindex="-1" hidden>Mis registros</button></div>
+    <form id="loginForm" class="access-form" role="tabpanel" aria-labelledby="tabAdmin">
+     <div class="access-field"><label for="adminCorreo">Correo electrónico</label><input id="adminCorreo" name="correo_electronico" class="field" type="email" required autocomplete="username" spellcheck="false" enterkeyhint="next" data-error="adminCorreoError"><span id="adminCorreoError" class="access-error">Escribe un correo electrónico válido.</span></div>
+     <div class="access-field"><label for="adminLlave">Llave personal</label><div class="access-password"><input id="adminLlave" name="llave" class="field" type="password" required autocomplete="current-password" enterkeyhint="go" data-error="adminLlaveError"><button class="access-reveal" type="button" data-password-toggle="adminLlave" aria-label="Mostrar llave personal" aria-pressed="false">Mostrar</button></div><span id="adminLlaveError" class="access-error">Escribe tu llave personal.</span></div>
+     <button id="loginSubmit" class="btn-primary access-submit" type="submit">Ingresar con mi llave <span aria-hidden="true">↗</span></button>
+    </form>
+    <form id="responsableLoginForm" class="access-form hidden" role="tabpanel" aria-labelledby="tabResponsable">
+     <div class="access-field"><label for="responsableUsuario">Usuario</label><input id="responsableUsuario" name="usuario" class="field uppercase font-mono" type="text" required maxlength="19" pattern="[A-Fa-f0-9]{4}(-[A-Fa-f0-9]{4}){3}" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off" enterkeyhint="next" data-error="responsableUsuarioError"></div>
+     <div class="access-field"><label for="responsableLlave">Llave</label><div class="access-password"><input id="responsableLlave" name="llave" class="field font-mono" type="password" required maxlength="19" pattern="[A-Fa-f0-9]{4}(-[A-Fa-f0-9]{4}){3}" autocomplete="off" enterkeyhint="go" data-error="responsableLlaveError"><button class="access-reveal" type="button" data-password-toggle="responsableLlave" aria-label="Mostrar llave" aria-pressed="false">Mostrar</button></div></div>
+     <button id="responsableLoginSubmit" class="btn-primary access-submit" type="submit">Consultar mis registros <span aria-hidden="true">↗</span></button>
+    </form>
+    <div class="access-help-row"><button class="access-help-trigger" type="button" popovertarget="accessHelp">¿Necesitas ayuda para ingresar?</button></div>
+    <div id="accessHelp" class="access-help-popover" popover="auto"><strong>Ayuda de acceso</strong><p>Si no puedes ingresar, contacta a quien administra el registro para revisar tu acceso.</p><button class="access-help-close" type="button" popovertarget="accessHelp" popovertargetaction="hide">Cerrar</button></div>
+   </div>
+  </div>
+ </section>
+ <section id="responsableVista" class="max-w-6xl mx-auto hidden space-y-5" aria-label="Mis registros"><div class="card"><span class="text-xs font-extrabold uppercase tracking-wider text-guinda">Mis registros</span><h2 id="responsableNombre" class="text-2xl font-extrabold text-guinda mt-2"></h2><p id="responsableEquipo" class="text-sm text-slate-600 mt-1"></p>
+   <div class="responsable-progress"><div class="responsable-progress-heading"><span>Total de registros</span><strong id="responsableTotal" aria-live="polite">0</strong></div><div class="responsable-progress-track" aria-hidden="true"><span class="responsable-progress-fill"></span></div><p>Inscripciones de esta invitación</p></div>
+  </div>
+  <div class="card"><div class="mb-4"><h3 class="text-lg font-extrabold text-guinda">Registros de esta invitación</h3><p class="text-sm text-slate-600 mt-1">Se muestran nombre completo, fecha y distrito.</p></div>
+   <div id="contenedorRegistrosResponsable" class="inscripciones-scroll" tabindex="0" aria-label="Lista de mis registros; desplázate para ver más"><table class="w-full text-sm"><thead class="bg-guinda text-white"><tr><th scope="col" class="p-3 text-left">Nombre completo</th><th scope="col" class="p-3 text-left">Fecha</th><th scope="col" class="p-3 text-left">Distrito</th></tr></thead><tbody id="tablaResponsable"></tbody></table></div>
+   <div class="flex flex-wrap items-center justify-between gap-3 mt-4"><button id="responsableAnterior" class="btn-secondary" type="button" disabled>Anterior</button><span id="responsablePagina" class="text-sm text-slate-600" aria-live="polite">Página 1</span><button id="responsableSiguiente" class="btn-secondary" type="button" disabled>Siguiente</button></div>
+  </div>
+ </section>
  <section id="adminVista" class="hidden space-y-5"><div class="card"><h2 class="text-xl font-extrabold text-guinda" id="bienvenida">Administración</h2><div id="kpis" class="mt-3 text-sm font-semibold"></div></div>
   <nav class="panel-nav" aria-label="Secciones de administración"><button type="button" class="panel-tab active" data-panel="panelGenerar" aria-current="page">Generar invitación</button><button type="button" class="panel-tab" data-panel="panelSeguimiento">Seguimiento y registros</button><button type="button" class="panel-tab" data-panel="panelMetricas">Métricas y reportes</button></nav>
   <div id="panelGenerar">
@@ -63,7 +152,7 @@
   <div class="card"><h3 class="font-extrabold text-lg text-guinda mb-3">Seguimiento de invitaciones</h3><p class="text-sm text-slate-500 mb-3">Las acciones afectan únicamente la invitación seleccionada.</p><div id="contenedorInvitaciones" class="invitation-scroll" tabindex="0" aria-label="Tabla de invitaciones; desplázate para ver más códigos"><table class="w-full text-sm"><thead class="bg-guinda text-white"><tr><th class="p-3 text-left">Responsable</th><th class="p-3 text-left">Equipo</th><th class="p-3">Inscripciones</th><th class="p-3">Vencimiento</th><th class="p-3">Estado</th><th class="p-3">Acciones</th></tr></thead><tbody id="tablaInvitaciones"></tbody></table></div></div>
   <div class="card"><div class="flex flex-wrap justify-between gap-3 mb-3"><h3 id="tituloInscritos" class="font-extrabold text-lg text-guinda">Inscripciones recibidas</h3><button id="verTodas" class="btn-secondary" type="button">Ver todas</button></div>
    <p class="text-xs text-slate-500 mb-3">Las CURP proporcionadas aparecen parcialmente ocultas. Se muestran hasta 5000 registros por consulta.</p>
-   <div id="contenedorInscritos" class="inscripciones-scroll" tabindex="0" aria-label="Tabla de inscripciones; usa los encabezados para ordenar"><table class="w-full text-sm"><thead class="bg-guinda text-white"><tr><th scope="col" data-col="nombre" aria-sort="none"><button type="button" class="ordenar-columna">Nombre <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="curp_mascarada" aria-sort="none"><button type="button" class="ordenar-columna">CURP <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="distrito_numero" aria-sort="none"><button type="button" class="ordenar-columna">Distrito <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="seccion_electoral" aria-sort="none"><button type="button" class="ordenar-columna">Sección <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="referente" aria-sort="none"><button type="button" class="ordenar-columna">Referente <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="invitador_nombre" aria-sort="none"><button type="button" class="ordenar-columna">Invitador <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="creado_en" aria-sort="descending"><button type="button" class="ordenar-columna">Fecha <span aria-hidden="true">↓</span></button></th></tr></thead><tbody id="tablaInscritos"></tbody></table></div>
+   <div id="contenedorInscritos" class="inscripciones-scroll" tabindex="0" aria-label="Tabla de inscripciones; usa los encabezados para ordenar"><table class="w-full text-sm"><thead class="bg-guinda text-white"><tr><th scope="col" data-col="nombre" aria-sort="none"><button type="button" class="ordenar-columna">Nombre <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="curp_mascarada" aria-sort="none"><button type="button" class="ordenar-columna">CURP <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="distrito_numero" aria-sort="none"><button type="button" class="ordenar-columna">Distrito <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="seccion_electoral" aria-sort="none"><button type="button" class="ordenar-columna">Sección <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="referente" aria-sort="none"><button type="button" class="ordenar-columna">Referente <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="invitador_nombre" aria-sort="none"><button type="button" class="ordenar-columna">Invitador <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="creado_en" aria-sort="descending"><button type="button" class="ordenar-columna">Fecha <span aria-hidden="true">↓</span></button></th><th scope="col">Acciones</th></tr></thead><tbody id="tablaInscritos"></tbody></table></div>
   </div>
   </div>
   <section id="panelMetricas" class="hidden space-y-5" aria-label="Métricas y reportes"><div class="card"><h3 class="font-extrabold text-lg text-guinda">Registros por responsable</h3><p class="text-sm text-slate-600 mt-1">Cada anillo representa su porcentaje del total de inscripciones.</p><div id="metricasResponsables" class="metricas-grid mt-4" tabindex="0" aria-label="Tarjetas de registros por responsable; desplázate para ver más responsables"></div></div>
@@ -73,4 +162,5 @@
 </main>
 <script defer src="/vendor/sweetalert2.min.js"></script>
 <script defer src="/js/app.js"></script>
+<script defer src="/js/confirmacion.js"></script>
 </body></html>

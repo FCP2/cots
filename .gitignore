@@ -1,6 +1,14 @@
 node_modules/
+.agents/
+skills-lock.json
 .env
 .env.*
 !.env.example
 public/css/styles.css.map
 .DS_Store
+private/imports/
+private/fotos/
+public/assests/*.xlsx
+public/assests/*.xls
+public/assests/*.csv
+public/assests/*.tsv

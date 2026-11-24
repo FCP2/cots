@@ -11,7 +11,7 @@ if(process.env.NODE_ENV==='production') {
 }
 app.use(helmet({contentSecurityPolicy:{directives:{
  defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","https://fonts.googleapis.com"],
- fontSrc:["'self'","https://fonts.gstatic.com"],imgSrc:["'self'",'data:'],connectSrc:["'self'"],objectSrc:["'none'"],frameAncestors:["'none'"]
+ fontSrc:["'self'","https://fonts.gstatic.com"],imgSrc:["'self'",'data:','blob:'],connectSrc:["'self'"],objectSrc:["'none'"],frameAncestors:["'none'"]
 }}}));
 app.use(express.json({limit:'48kb'}));app.use(cookieParser());
 // Anti-CSRF: origen obligatorio para operaciones de escritura desde navegador.
@@ -24,10 +24,18 @@ app.use('/api',(req,res,next)=>{
 });
 app.get('/vendor/sweetalert2.min.css',(_req,res)=>res.sendFile(path.join(__dirname,'node_modules/sweetalert2/dist/sweetalert2.min.css')));
 app.get('/vendor/sweetalert2.min.js',(_req,res)=>res.sendFile(path.join(__dirname,'node_modules/sweetalert2/dist/sweetalert2.min.js')));
+// Solo se sirven imágenes desde assests; un Excel de importación no debe salir por HTTP.
+app.use('/assests',(req,res,next)=>{
+ let nombre;
+ try{nombre=decodeURIComponent(req.path);}catch{return res.sendStatus(404);}
+ return /\.(?:png|jpe?g|webp|gif|svg|ico)$/i.test(nombre)?next():res.sendStatus(404);
+});
 app.use(express.static(path.join(__dirname,'public'),{index:'index.html',extensions:false}));
 app.get('/api/salud',async(req,res,next)=>{try{await pool.query('SELECT 1');res.json({ok:true});}catch(e){next(e);}});
 app.use('/api/auth',require('./routes/auth'));
+app.use('/api/responsable',require('./routes/responsable'));
 app.use('/api/public',require('./routes/publico'));
+app.use('/api/confirmacion',require('./routes/confirmacion'));
 app.use('/api/admin',require('./routes/admin'));
 app.use((req,res)=>res.status(404).json({error:'Ruta no encontrada'}));
 app.use((err,req,res,next)=>{

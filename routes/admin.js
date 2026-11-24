@@ -6,6 +6,7 @@ const ExcelJS=require('exceljs');
 const {pool}=require('../config/database');
 const {auth,admin}=require('../middleware/auth');
 const {token,hashToken,audit}=require('../utils');
+const {claveConfigurada,cifrarCodigo,descifrarCodigo}=require('../utils/codigo-invitacion');
 const {limit}=require('../middleware/limiter');
 const router=express.Router();
 router.use(auth,admin);
@@ -40,6 +41,23 @@ router.get('/responsables',async(req,res,next)=>{
   res.set('Cache-Control','no-store').json(rows);
  }catch(e){next(e);}
 });
+router.get('/responsables/invitaciones',async(req,res,next)=>{
+ const nombre=req.query.nombre;
+ if(typeof nombre!=='string'||!nombre.trim()||nombre.length>250)
+  return res.status(400).json({error:'Responsable no válido'});
+ try{
+  const {rows}=await pool.query(`SELECT id,destinatario_nombre,estado,creada_en,vence_en,codigo_cifrado
+   FROM invitaciones WHERE lower(btrim(invitador_nombre))=lower(btrim($1)) AND eliminado_en IS NULL
+   ORDER BY creada_en DESC,id DESC`,[nombre]);
+  if(rows.some(x=>x.codigo_cifrado)&&!claveConfigurada())
+   return res.status(503).json({error:'Falta configurar la clave de consulta de códigos'});
+  res.set('Cache-Control','no-store').json(rows.map(x=>({
+   id:x.id,destinatario_nombre:x.destinatario_nombre,estado:x.estado,
+   creada_en:x.creada_en,vence_en:x.vence_en,
+   codigo_invitacion:x.codigo_cifrado?descifrarCodigo(x.codigo_cifrado,x.id):null
+  })));
+ }catch(e){next(e);}
+});
 router.post('/invitaciones',limit({max:30}),async(req,res,next)=>{
  const schema=z.object({
   destinatario_nombre:z.string().trim().min(3).max(250),
@@ -48,6 +66,7 @@ router.post('/invitaciones',limit({max:30}),async(req,res,next)=>{
  });
  const parsed=schema.safeParse(req.body);
  if(!parsed.success)return res.status(400).json({error:'Verifica los datos de la invitación'});
+ if(!claveConfigurada())return res.status(503).json({error:'Falta configurar la clave de consulta de códigos'});
  const p=parsed.data,raw=token();
  const codigo=crypto.randomBytes(8).toString('hex').toUpperCase().match(/.{1,4}/g).join('-');
  let c;
@@ -58,11 +77,12 @@ router.post('/invitaciones',limit({max:30}),async(req,res,next)=>{
    (token_hash,codigo_hash,destinatario_nombre,invitador_nombre,max_usos,creado_por,vence_en)
    VALUES($1,$2,$3,$4,NULL,$5,now()+($6::int*interval '1 day')) RETURNING id,vence_en`,
    [hashToken(raw),hashToken(codigo),p.destinatario_nombre,p.invitador_nombre,req.usuario.id,p.dias_vigencia]);
+  await c.query('UPDATE invitaciones SET codigo_cifrado=$2 WHERE id=$1',[rows[0].id,cifrarCodigo(codigo,rows[0].id)]);
   await audit(c,req.usuario.id,'CREAR','invitaciones',rows[0].id,{invitador:p.invitador_nombre,grupo:p.destinatario_nombre});
   await c.query('COMMIT');
   const appUrl=(process.env.APP_URL||'').replace(/\/$/,'');
   res.status(201).json({id:rows[0].id,vence_en:rows[0].vence_en,
-   url:`${appUrl}/?invite=registro`,codigo_invitacion:codigo});
+   url:`${appUrl}/?confirmar=registro`,codigo_invitacion:codigo});
  }catch(e){if(c)await c.query('ROLLBACK').catch(()=>{});next(e);}finally{c?.release();}
 });
 router.post('/invitaciones/:id/revocar',async(req,res,next)=>{
@@ -80,20 +100,50 @@ router.post('/invitaciones/:id/revocar',async(req,res,next)=>{
 });
 router.patch('/invitaciones/:id',async(req,res,next)=>{
  if(!/^\d+$/.test(req.params.id))return res.status(400).json({error:'Invitación no válida'});
- const parsed=z.object({invitador_nombre:z.string().trim().min(3).max(250)}).strict().safeParse(req.body);
- if(!parsed.success)return res.status(400).json({error:'Escribe un nombre de responsable entre 3 y 250 caracteres'});
+ const fecha=z.string().regex(/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/).refine(v=>{
+  const d=new Date(`${v}T00:00:00Z`);return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===v;
+ });
+ const parsed=z.object({invitador_nombre:z.string().trim().min(3).max(250),vence_fecha:fecha.optional()}).strict().safeParse(req.body);
+ if(!parsed.success)return res.status(400).json({error:'Revisa el nombre y la fecha de vencimiento de la invitación'});
  let c;
  try{
   c=await pool.connect();
   await c.query('BEGIN');
-  const {rows}=await c.query('SELECT id,invitador_nombre FROM invitaciones WHERE id=$1 AND eliminado_en IS NULL FOR UPDATE',[req.params.id]);
+  const {rows}=await c.query('SELECT id,invitador_nombre,vence_en FROM invitaciones WHERE id=$1 AND eliminado_en IS NULL FOR UPDATE',[req.params.id]);
   if(!rows.length){await c.query('ROLLBACK');return res.status(404).json({error:'Invitación no encontrada'});}
   const anterior=rows[0].invitador_nombre,nuevo=parsed.data.invitador_nombre;
   if(anterior!==nuevo){
    await c.query('UPDATE invitaciones SET invitador_nombre=$2 WHERE id=$1',[req.params.id,nuevo]);
    await audit(c,req.usuario.id,'EDITAR_RESPONSABLE','invitaciones',req.params.id,{anterior,nuevo});
   }
-  await c.query('COMMIT');res.json({ok:true,invitador_nombre:nuevo});
+  let vence_en=rows[0].vence_en;
+  if(parsed.data.vence_fecha){
+   const actualizado=await c.query(`UPDATE invitaciones SET vence_en=(($2::date + interval '1 day') AT TIME ZONE 'America/Mexico_City')
+    WHERE id=$1 RETURNING vence_en`,[req.params.id,parsed.data.vence_fecha]);
+   vence_en=actualizado.rows[0].vence_en;
+   await audit(c,req.usuario.id,'EDITAR_VENCIMIENTO','invitaciones',req.params.id,{anterior:rows[0].vence_en,nuevo:vence_en});
+  }
+  await c.query('COMMIT');res.json({ok:true,invitador_nombre:nuevo,vence_en});
+ }catch(e){if(c)await c.query('ROLLBACK').catch(()=>{});next(e);}finally{c?.release();}
+});
+router.post('/invitaciones/:id/vincular-codigo',limit({max:20}),async(req,res,next)=>{
+ if(!/^\d+$/.test(req.params.id))return res.status(400).json({error:'Invitación no válida'});
+ const parsed=z.object({codigo_invitacion:z.string().trim().regex(/^[0-9A-F]{4}(?:-[0-9A-F]{4}){3}$/i).transform(v=>v.toUpperCase())}).strict().safeParse(req.body);
+ if(!parsed.success)return res.status(400).json({error:'Código de invitación no válido'});
+ if(!claveConfigurada())return res.status(503).json({error:'Falta configurar la clave de consulta de códigos'});
+ let c;
+ try{
+  c=await pool.connect();await c.query('BEGIN');
+  const {rows}=await c.query('SELECT id,codigo_hash,codigo_cifrado FROM invitaciones WHERE id=$1 AND eliminado_en IS NULL FOR UPDATE',[req.params.id]);
+  const i=rows[0];
+  if(!i){await c.query('ROLLBACK');return res.status(404).json({error:'Invitación no encontrada'});}
+  if(i.codigo_cifrado){await c.query('ROLLBACK');return res.status(409).json({error:'Este código ya está disponible para consulta'});}
+  if(i.codigo_hash!==hashToken(parsed.data.codigo_invitacion)){
+   await c.query('ROLLBACK');return res.status(400).json({error:'El código no corresponde a esta invitación'});
+  }
+  await c.query('UPDATE invitaciones SET codigo_cifrado=$2 WHERE id=$1',[i.id,cifrarCodigo(parsed.data.codigo_invitacion,i.id)]);
+  await audit(c,req.usuario.id,'VINCULAR_CODIGO','invitaciones',i.id);
+  await c.query('COMMIT');res.json({ok:true});
  }catch(e){if(c)await c.query('ROLLBACK').catch(()=>{});next(e);}finally{c?.release();}
 });
 router.delete('/invitaciones/:id',async(req,res,next)=>{
@@ -133,6 +183,20 @@ router.get('/inscripciones',async(req,res,next)=>{
   res.set('Cache-Control','no-store').json(rows);
  }catch(e){next(e);}
 });
+router.delete('/inscripciones/:id',async(req,res,next)=>{
+ if(!/^\d+$/.test(req.params.id))return res.status(400).json({error:'Inscripción no válida'});
+ let c;
+ try{
+  c=await pool.connect();
+  await c.query('BEGIN');
+  const {rows}=await c.query(`UPDATE inscripciones SET eliminado_en=now()
+   WHERE id=$1 AND eliminado_en IS NULL RETURNING id,invitacion_id`,[req.params.id]);
+  if(!rows.length){await c.query('ROLLBACK');return res.status(404).json({error:'La inscripción no existe o ya fue eliminada'});}
+  await audit(c,req.usuario.id,'ELIMINAR','inscripciones',rows[0].id,{invitacion_id:rows[0].invitacion_id});
+  await c.query('COMMIT');
+  res.json({ok:true,id:rows[0].id});
+ }catch(e){if(c)await c.query('ROLLBACK').catch(()=>{});next(e);}finally{c?.release();}
+});
 router.get('/reportes/inscripciones.xlsx',async(req,res,next)=>{
  try{
   const responsable=req.query.responsable;
@@ -142,7 +206,8 @@ router.get('/reportes/inscripciones.xlsx',async(req,res,next)=>{
   const [summary,detail]=await Promise.all([
    pool.query(`SELECT min(btrim(i.invitador_nombre)) AS nombre,count(s.id)::int AS registros
     FROM invitaciones i LEFT JOIN inscripciones s ON s.invitacion_id=i.id AND s.eliminado_en IS NULL
-    WHERE ($1::text IS NULL OR lower(btrim(i.invitador_nombre))=lower($1))
+    WHERE (i.eliminado_en IS NULL OR s.id IS NOT NULL)
+      AND ($1::text IS NULL OR lower(btrim(i.invitador_nombre))=lower($1))
     GROUP BY lower(btrim(i.invitador_nombre)) ORDER BY nombre`,[filtro]),
    pool.query(`SELECT s.nombre,s.apellido_paterno,s.apellido_materno,
     s.curp,

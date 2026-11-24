@@ -1,5 +1,5 @@
 'use strict';
-// Solo el administrador accede con correo y llave personal.
+// El administrador conserva su acceso con correo y llave personal.
 const express=require('express');
 const {z}=require('zod');
 const crypto=require('crypto');
@@ -27,6 +27,26 @@ router.post('/entrar',limit({max:8}),async(req,res,next)=>{
  }catch(e){next(e);}finally{c.release();}
 });
 router.get('/yo',auth,admin,(req,res)=>res.json({usuario:req.usuario}));
+router.get('/estado',async(req,res,next)=>{
+ res.set('Cache-Control','no-store');
+ const raw=req.cookies?.cots_sid;
+ if(!raw||!/^[a-f0-9]{64}$/.test(raw))return res.json({tipo:null});
+ try{
+  const hash=hashToken(raw);
+  const adminSession=await pool.query(`SELECT u.id,u.nombre,u.apellido_paterno,u.rol
+   FROM sesiones s JOIN usuarios u ON u.id=s.usuario_id
+   WHERE s.token_hash=$1 AND s.revocada_en IS NULL AND s.vence_en>now()
+    AND u.estado='activo' AND u.rol='admin'`,[hash]);
+  if(adminSession.rows.length)return res.json({tipo:'admin',usuario:adminSession.rows[0]});
+  const responsableSession=await pool.query(`SELECT i.invitador_nombre,i.destinatario_nombre
+   FROM sesiones_responsables s JOIN invitaciones i ON i.id=s.invitacion_id
+   WHERE s.token_hash=$1 AND s.revocada_en IS NULL AND s.vence_en>now()
+    AND i.estado='pendiente' AND i.eliminado_en IS NULL
+    AND (i.vence_en IS NULL OR i.vence_en>now())`,[hash]);
+  if(responsableSession.rows.length)return res.json({tipo:'responsable',responsable:responsableSession.rows[0]});
+  res.json({tipo:null});
+ }catch(e){next(e);}
+});
 router.post('/salir',auth,admin,async(req,res,next)=>{
  try{await pool.query('UPDATE sesiones SET revocada_en=now() WHERE token_hash=$1',[hashToken(req.cookies.cots_sid)]);
   res.clearCookie('cots_sid',cookieConfig());res.json({ok:true});}catch(e){next(e);}
