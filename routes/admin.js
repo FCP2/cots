@@ -2,6 +2,8 @@
 const express=require('express');
 const {z}=require('zod');
 const crypto=require('crypto');
+const fs=require('node:fs/promises');
+const path=require('node:path');
 const ExcelJS=require('exceljs');
 const {pool}=require('../config/database');
 const {auth,admin}=require('../middleware/auth');
@@ -181,6 +183,34 @@ router.get('/inscripciones',async(req,res,next)=>{
     WHERE s.eliminado_en IS NULL AND ($1::bigint IS NULL OR s.invitacion_id=$1)
     ORDER BY s.creado_en DESC LIMIT 5000`,[id||null]);
   res.set('Cache-Control','no-store').json(rows);
+ }catch(e){next(e);}
+});
+router.get('/inscripciones/:id/ficha',async(req,res,next)=>{
+ if(!/^\d+$/.test(req.params.id))return res.status(400).json({error:'Inscripción no válida'});
+ try{
+  const {rows}=await pool.query(`SELECT s.nombre,s.apellido_paterno,s.apellido_materno,
+   f.nivel_estudios,f.estatus_estudios,f.cursos,
+   (f.inscripcion_id IS NOT NULL) AS tiene_ficha,(f.foto_archivo IS NOT NULL) AS tiene_foto
+   FROM inscripciones s LEFT JOIN fichas_curriculares f ON f.inscripcion_id=s.id
+   WHERE s.id=$1 AND s.eliminado_en IS NULL`,[req.params.id]);
+  if(!rows.length)return res.status(404).json({error:'Inscripción no encontrada'});
+  const experiencias=await pool.query(`SELECT puesto,institucion,periodo_inicio,periodo_fin
+   FROM experiencias_laborales WHERE inscripcion_id=$1 ORDER BY orden`,[req.params.id]);
+  res.set('Cache-Control','private, no-store').json({registro:rows[0],experiencias:experiencias.rows});
+ }catch(e){next(e);}
+});
+router.get('/inscripciones/:id/foto',async(req,res,next)=>{
+ if(!/^\d+$/.test(req.params.id))return res.status(400).json({error:'Inscripción no válida'});
+ try{
+  const {rows}=await pool.query(`SELECT f.foto_archivo FROM inscripciones s
+   JOIN fichas_curriculares f ON f.inscripcion_id=s.id
+   WHERE s.id=$1 AND s.eliminado_en IS NULL`,[req.params.id]);
+  const name=rows[0]?.foto_archivo;
+  if(!name||!/^[0-9a-f-]{36}\.(?:jpg|png|webp)$/.test(name))return res.sendStatus(404);
+  const dir=process.env.PHOTO_STORAGE_DIR&&path.isAbsolute(process.env.PHOTO_STORAGE_DIR)
+   ?process.env.PHOTO_STORAGE_DIR:process.env.NODE_ENV==='production'?null:path.join(__dirname,'../private/fotos');
+  if(!dir||!(await fs.stat(dir).catch(()=>null))?.isDirectory())return res.sendStatus(503);
+  res.set('Cache-Control','private, no-store');res.type(path.extname(name));res.sendFile(path.join(dir,name));
  }catch(e){next(e);}
 });
 router.delete('/inscripciones/:id',async(req,res,next)=>{

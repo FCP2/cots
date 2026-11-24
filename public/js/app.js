@@ -4,7 +4,7 @@ const tokenInvitacion=new URLSearchParams(location.search).get('invite');
 const esConfirmacion=new URLSearchParams(location.search).get('confirmar')==='registro';
 const esUrlPublicaFija=tokenInvitacion==='registro';
 let pendiente=null,enviando=false,revisando=false,entrando=false,entrandoResponsable=false,generandoInvitacion=false;
-let sesionActiva=null,saliendo=false,cargandoResponsable=false,paginaResponsable=1,totalPaginasResponsable=1;
+let sesionActiva=null,saliendo=false,cargandoResponsable=false,fichaAdminCargando=false,paginaResponsable=1,totalPaginasResponsable=1;
 let inscripciones=[],ordenInscritos={col:'creado_en',dir:'desc'},filtroInscritos={id:null,etiqueta:''};
 let responsables=[];
 function view(id,show){$(id).classList.toggle('hidden',!show);}
@@ -401,6 +401,38 @@ function valorInscrito(x,col){
  if(col==='referente')return nombre(x,'referente_');
  return x[col]??'';
 }
+function celdaFicha(row,value){const td=document.createElement('td');td.textContent=value==null?'':String(value);row.append(td);}
+function mesAnio(value){return value?`${value.slice(5,7)}/${value.slice(0,4)}`:'';}
+async function verFichaAdmin(x,button){
+ if(fichaAdminCargando)return;
+ fichaAdminCargando=true;botonCargando(button,true,'Abriendo...');
+ try{
+  const data=await api(`/api/admin/inscripciones/${x.id}/ficha`),r=data.registro;
+  const sheet=document.querySelector('#confirmPreviewPane .curriculum-sheet').cloneNode(true);
+  const nombreRow=sheet.querySelector('#confirmPreviewNombre');nombreRow.replaceChildren();
+  [r.nombre,r.apellido_paterno,r.apellido_materno].forEach(value=>celdaFicha(nombreRow,value));
+  const experiencias=sheet.querySelector('#confirmPreviewExperiencias');experiencias.replaceChildren();
+  for(let i=0;i<5;i++){
+   const row=document.createElement('tr'),e=data.experiencias[i];
+   celdaFicha(row,e?.puesto);celdaFicha(row,e?.institucion);
+   celdaFicha(row,e?.periodo_inicio?`${mesAnio(e.periodo_inicio)} — ${e.periodo_fin?mesAnio(e.periodo_fin):'actualidad'}`:'');
+   experiencias.append(row);
+  }
+  const formacion=sheet.querySelector('#confirmPreviewFormacion');formacion.replaceChildren();
+  celdaFicha(formacion,r.nivel_estudios);celdaFicha(formacion,r.estatus_estudios);
+  const cursos=sheet.querySelector('#confirmPreviewCursos');cursos.replaceChildren();celdaFicha(cursos,r.cursos);
+  const photo=sheet.querySelector('#confirmPreviewFoto');
+  photo.src=r.tiene_foto?`/api/admin/inscripciones/${x.id}/foto`:'/assests/ficha-foto-placeholder.png';
+  await photo.decode().catch(()=>{photo.src='/assests/ficha-foto-placeholder.png';});
+  sheet.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  $('adminFichaTitulo').textContent=`Ficha curricular · ${nombre(r)}`;
+  $('adminFichaEstado').textContent=r.tiene_ficha?'Ficha guardada':'Ficha complementaria pendiente';
+  $('adminFichaContenido').replaceChildren(sheet);
+  $('adminPrintFicha').replaceChildren(sheet.cloneNode(true));
+  $('adminFichaDialog').showModal();
+ }catch(e){aviso(e.message,true);}finally{fichaAdminCargando=false;botonCargando(button,false);}
+}
+$('adminFichaImprimir').addEventListener('click',()=>{if($('adminPrintFicha').firstElementChild)window.print();});
 function renderInscritos(){
  const {col,dir}=ordenInscritos;
  const rows=[...inscripciones].sort((a,b)=>{
@@ -412,8 +444,10 @@ function renderInscritos(){
  for(const x of rows){let tr=document.createElement('tr');celda(tr,nombre(x));celda(tr,x.curp_mascarada);celda(tr,String(x.distrito_numero).padStart(2,'0'));
    celda(tr,x.seccion_electoral);celda(tr,nombre(x,'referente_'));celda(tr,x.invitador_nombre);
    celda(tr,new Date(x.creado_en).toLocaleString('es-MX'));
-   const acciones=celda(tr,'');const eliminar=botonAccion('Eliminar','delete',()=>eliminarInscripcion(x).catch(e=>aviso(e.message,true)));
-   eliminar.setAttribute('aria-label',`Eliminar inscripción de ${nombre(x)}`);acciones.append(eliminar);body.append(tr);}
+   const acciones=celda(tr,'');const ver=botonAccion('Ver','view',e=>verFichaAdmin(x,e.currentTarget));
+   ver.setAttribute('aria-label',`Ver ficha curricular de ${nombre(x)}`);
+   const eliminar=botonAccion('Eliminar','delete',()=>eliminarInscripcion(x).catch(e=>aviso(e.message,true)));
+   eliminar.setAttribute('aria-label',`Eliminar inscripción de ${nombre(x)}`);acciones.append(ver,eliminar);body.append(tr);}
  if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=8;td.className='p-4 text-center text-slate-500';td.textContent='No hay inscripciones para mostrar.';tr.append(td);body.append(tr);}
  document.querySelectorAll('#contenedorInscritos th[data-col]').forEach(th=>{
   const active=th.dataset.col===col;

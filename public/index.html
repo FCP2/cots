@@ -159,7 +159,12 @@
    <div class="card"><h3 class="font-extrabold text-lg text-guinda">Reportes en Excel</h3><p class="text-sm text-slate-600 mt-1">Descarga el total de inscripciones o el detalle de un responsable. El Excel incluye la CURP completa cuando se proporcionó; conserva el archivo en un lugar seguro.</p><div class="report-controls mt-4"><button id="exportarGeneral" type="button" class="btn-primary">Descargar reporte general</button><label><span class="label">Responsable</span><select id="responsableReporte" class="field"><option value="">Selecciona un responsable</option></select></label><button id="exportarResponsable" type="button" class="btn-secondary" disabled>Descargar por responsable</button></div></div>
   </section>
  </section>
+ <dialog id="adminFichaDialog" class="admin-ficha-dialog" aria-labelledby="adminFichaTitulo">
+  <div class="admin-ficha-toolbar"><div><span class="confirm-kicker">Vista previa administrativa</span><h2 id="adminFichaTitulo">Ficha curricular</h2><p id="adminFichaEstado"></p></div><div class="admin-ficha-actions"><button id="adminFichaImprimir" class="btn-primary" type="button">Exportar PDF / Imprimir</button><form method="dialog"><button class="btn-secondary" type="submit">Cerrar</button></form></div></div>
+  <div id="adminFichaContenido"></div>
+ </dialog>
 </main>
+<div id="adminPrintFicha" aria-hidden="true"></div>
 <script defer src="/vendor/sweetalert2.min.js"></script>
 <script defer src="/js/app.js"></script>
 <script defer src="/js/confirmacion.js"></script>

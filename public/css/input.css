@@ -292,30 +292,30 @@ body:has(#loginVista:not(.hidden)) > header {
 #confirmacionVista .confirm-preview-pane { margin-block:1.1rem; }
 #confirmacionVista .confirm-preview-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:1.2rem 1.5rem; border:1px solid #e8dfd6; border-radius:.8rem .8rem 0 0; background:#faf8f5; }
 #confirmacionVista .confirm-preview-toolbar h2 { margin:.25rem 0 0; color:#4e1223; font-family:Georgia,serif; font-size:1.5rem; }
-#confirmacionVista .curriculum-sheet { width:100%; padding:clamp(1rem,3.5cqi,2.5rem); border:1px solid #dfd9d1; border-top:0; border-radius:0 0 .8rem .8rem; background:white; box-shadow:0 12px 28px #4e122315; color:#1e1e1e; font-family:Arial,Helvetica,sans-serif; }
-#confirmacionVista .curriculum-header { display:grid; grid-template-columns:minmax(0, 45%) 1px minmax(0, 1fr); align-items:center; column-gap:clamp(.65rem,3cqi,2rem); min-height:6.5rem; margin-bottom:1.3rem; padding-bottom:.55rem; border-bottom:1px solid #df9b96; }
-#confirmacionVista .curriculum-header h3 { margin:0; color:#858585; font-size:clamp(.78rem,2.6cqi,1.55rem); font-weight:800; letter-spacing:0; white-space:nowrap; }
-#confirmacionVista .curriculum-header-divider { align-self:stretch; width:1px; min-height:4.5rem; background:#df9b96; }
-#confirmacionVista .curriculum-brand { display:flex; flex-direction:column; align-items:start; width:min(17rem,100%); }
-#confirmacionVista .curriculum-brand img:first-child { display:block; width:100%; height:auto; opacity:.58; }
-#confirmacionVista .curriculum-brand img:last-child { display:block; width:100%; height:auto; margin-top:-.12rem; opacity:.5; }
-#confirmacionVista .curriculum-name-row { display:grid; grid-template-columns:6rem minmax(0,1fr); align-items:center; gap:.8rem; margin-bottom:1.15rem; }
-#confirmacionVista .curriculum-name-row .curriculum-table-scroll { margin-bottom:0; }
-#confirmacionVista .curriculum-photo { width:6rem; height:6rem; display:grid; place-items:center; margin:0; border:1px solid #555; background:#f4f4f4; }
-#confirmacionVista .curriculum-photo img { width:100%; height:100%; object-fit:cover; }
-#confirmacionVista .curriculum-table-scroll { max-width:100%; overflow-x:auto; margin-bottom:1.15rem; scrollbar-gutter:stable; }
-#confirmacionVista .curriculum-table-scroll:focus-visible { outline:2px solid var(--confirm-gold); outline-offset:2px; }
-#confirmacionVista .curriculum-table { width:100%; min-width:30rem; border-collapse:collapse; table-layout:fixed; font-size:.8rem; }
-#confirmacionVista .curriculum-name-row .curriculum-table { min-width:25rem; }
-#confirmacionVista .curriculum-table caption { padding:.55rem .65rem; border:1px solid #303030; border-bottom:0; color:#111; background:#f0f0f0; font-size:.9rem; font-weight:800; text-align:center; letter-spacing:.02em; }
-#confirmacionVista .curriculum-table th,#confirmacionVista .curriculum-table td { padding:.55rem .65rem; border:1px solid #555; overflow-wrap:anywhere; vertical-align:middle; text-align:center; line-height:1.5; }
-#confirmacionVista .curriculum-table th { position:sticky; top:0; background:#fafafa; color:#161616; font-size:.74rem; font-weight:700; }
-#confirmacionVista .curriculum-table th small { display:block; margin-top:.2rem; color:#555; font-size:.68rem; font-weight:400; text-transform:none; }
-#confirmacionVista .curriculum-table td { min-height:2rem; height:2.1rem; white-space:pre-wrap; }
-#confirmacionVista .curriculum-table-scroll[aria-label="Formación académica"] th:first-child { width:64%; }
-#confirmacionVista .curriculum-table-scroll[aria-label="Cursos, talleres o diplomados"] td { height:5rem; }
-@container (max-width:38rem) { #confirmacionVista .curriculum-header { min-height:4.5rem; } #confirmacionVista .curriculum-header-divider { min-height:3.5rem; } #confirmacionVista .curriculum-name-row { grid-template-columns:minmax(0,1fr); } #confirmacionVista .curriculum-photo { justify-self:start; } }
-@container (max-width:30rem) { #confirmacionVista .curriculum-header h3 { white-space:normal; } }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-sheet { width:100%; padding:clamp(1rem,3.5cqi,2.5rem); border:1px solid #dfd9d1; border-top:0; border-radius:0 0 .8rem .8rem; background:white; box-shadow:0 12px 28px #4e122315; color:#1e1e1e; font-family:Arial,Helvetica,sans-serif; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-header { display:grid; grid-template-columns:minmax(0, 45%) 1px minmax(0, 1fr); align-items:center; column-gap:clamp(.65rem,3cqi,2rem); min-height:6.5rem; margin-bottom:1.3rem; padding-bottom:.55rem; border-bottom:1px solid #df9b96; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-header h3 { margin:0; color:#858585; font-size:clamp(.78rem,2.6cqi,1.55rem); font-weight:800; letter-spacing:0; white-space:nowrap; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-header-divider { align-self:stretch; width:1px; min-height:4.5rem; background:#df9b96; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-brand { display:flex; flex-direction:column; align-items:start; width:min(17rem,100%); }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-brand img:first-child { display:block; width:100%; height:auto; opacity:.58; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-brand img:last-child { display:block; width:100%; height:auto; margin-top:-.12rem; opacity:.5; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-name-row { display:grid; grid-template-columns:6rem minmax(0,1fr); align-items:center; gap:.8rem; margin-bottom:1.15rem; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-name-row .curriculum-table-scroll { margin-bottom:0; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo { width:6rem; height:6rem; display:grid; place-items:center; margin:0; border:1px solid #555; background:#f4f4f4; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo img { width:100%; height:100%; object-fit:cover; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table-scroll { max-width:100%; overflow-x:auto; margin-bottom:1.15rem; scrollbar-gutter:stable; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table-scroll:focus-visible { outline:2px solid #bc955c; outline-offset:2px; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table { width:100%; min-width:30rem; border-collapse:collapse; table-layout:fixed; font-size:.8rem; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-name-row .curriculum-table { min-width:25rem; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table caption { padding:.55rem .65rem; border:1px solid #303030; border-bottom:0; color:#111; background:#f0f0f0; font-size:.9rem; font-weight:800; text-align:center; letter-spacing:.02em; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table th,:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table td { padding:.55rem .65rem; border:1px solid #555; overflow-wrap:anywhere; vertical-align:middle; text-align:center; line-height:1.5; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table th { position:sticky; top:0; background:#fafafa; color:#161616; font-size:.74rem; font-weight:700; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table th small { display:block; margin-top:.2rem; color:#555; font-size:.68rem; font-weight:400; text-transform:none; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table td { min-height:2rem; height:2.1rem; white-space:pre-wrap; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table-scroll[aria-label="Formación académica"] th:first-child { width:64%; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table-scroll[aria-label="Cursos, talleres o diplomados"] td { height:5rem; }
+@container (max-width:38rem) { :is(#confirmacionVista,#adminFichaDialog) .curriculum-header { min-height:4.5rem; } :is(#confirmacionVista,#adminFichaDialog) .curriculum-header-divider { min-height:3.5rem; } :is(#confirmacionVista,#adminFichaDialog) .curriculum-name-row { grid-template-columns:minmax(0,1fr); } :is(#confirmacionVista,#adminFichaDialog) .curriculum-photo { justify-self:start; } }
+@container (max-width:30rem) { :is(#confirmacionVista,#adminFichaDialog) .curriculum-header h3 { white-space:normal; } }
 #confirmacionVista .confirm-actions { display:flex; flex-wrap:wrap; gap:.7rem; margin-top:1.5rem; }
 #confirmacionVista .confirm-message { margin-top:1rem; padding:1rem; border-radius:.6rem; background:#e5f3e9; color:#205638; font-size:.9rem; font-weight:600; }
 #confirmacionVista .confirm-message.is-error { background:#fbe8e7; color:#8b2331; }
@@ -325,3 +325,26 @@ body:has(#loginVista:not(.hidden)) > header {
 #confirmacionVista .hidden { display:none; }
 @container (min-width:38rem) { #confirmacionVista .confirm-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @container (max-width:32rem) { #confirmacionVista .confirm-data { grid-template-columns:1fr; } #confirmacionVista .confirm-data dd { margin-bottom:.5rem; } #confirmacionVista .confirm-heading { flex-wrap:wrap; } }
+
+#adminFichaDialog { width:min(58rem,calc(100vw - 2rem)); max-width:none; max-height:calc(100dvh - 2rem); padding:0; border:1px solid #e8dfd6; border-radius:1rem; background:white; box-shadow:0 24px 70px #4e12233d; overflow:auto; container-type:inline-size; }
+#adminFichaDialog:modal { overscroll-behavior:contain; }
+#adminFichaDialog::backdrop { background:#24141bbb; overflow:hidden; overscroll-behavior:contain; }
+#adminFichaDialog .admin-ficha-toolbar { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; padding:1rem 1.5rem; border-bottom:1px solid #e8dfd6; background:#faf8f5; }
+#adminFichaDialog .admin-ficha-toolbar h2 { margin:.2rem 0; color:#4e1223; font-family:Georgia,serif; font-size:1.5rem; }
+#adminFichaDialog .admin-ficha-toolbar p { margin:0; color:#675d59; font-size:.8rem; }
+#adminFichaDialog .confirm-kicker { color:#9a7141; font-size:.72rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+#adminFichaDialog .admin-ficha-actions { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; }
+#adminFichaDialog .curriculum-sheet { border:0; border-radius:0; box-shadow:none; }
+#adminPrintFicha { display:none; }
+
+@page { size:letter portrait; margin:.45in; }
+@media print {
+  body { margin:0; background:white; }
+  body>header,body>main { display:none!important; }
+  #adminPrintFicha { display:block!important; width:100%; container-type:inline-size; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  #adminPrintFicha .curriculum-sheet { padding:0; border:0; box-shadow:none; }
+  #adminPrintFicha .curriculum-header { min-height:0; }
+  #adminPrintFicha .curriculum-table-scroll { overflow:visible; scrollbar-gutter:auto; }
+  #adminPrintFicha .curriculum-table,#adminPrintFicha .curriculum-name-row .curriculum-table { width:100%; min-width:0; }
+  #adminPrintFicha .curriculum-table tr { break-inside:avoid; }
+}
