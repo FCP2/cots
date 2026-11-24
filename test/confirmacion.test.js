@@ -89,6 +89,14 @@ test('nuevo registro exige cuatro dígitos numéricos en sección electoral',asy
  }finally{pool.connect=original;}
 });
 
+test('edad exige exactamente dos dígitos numéricos',()=>{
+ const {datosInscripcionSchema}=require('../validation/inscripcion');
+ assert.equal(datosInscripcionSchema.safeParse({...nuevoBody.registro,edad:'34'}).success,true);
+ for(const edad of ['9','100','3a','34.5']){
+  assert.equal(datosInscripcionSchema.safeParse({...nuevoBody.registro,edad}).success,false);
+ }
+});
+
 test('el código vencido permite completar fichas, pero no ofrece registro nuevo',async()=>{
  const original=pool.query;
  pool.query=async()=>({rows:[{...activa,invitador_nombre:'Ana',destinatario_nombre:'Equipo',vence_en:new Date('2020-01-01')} ]});

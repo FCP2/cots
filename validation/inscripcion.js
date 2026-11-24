@@ -12,7 +12,7 @@ const form=z.object({
  nombre:nombrePersona,apellido_paterno:apellidoPersona,apellido_materno:apellidoOpcional,
  curp:z.preprocess(v=>v===undefined||(typeof v==='string'&&!v.trim())?null:v,
   z.string().trim().toUpperCase().regex(/^[A-Z][AEIOUX][A-Z]{2}\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[HM][A-Z]{5}[A-Z0-9]\d$/,'CURP no válida (18 caracteres)').nullable()),
- edad:z.coerce.number().int().min(0).max(120),
+ edad:z.preprocess(v=>typeof v==='number'?String(v):v,z.string().trim().regex(/^\d{2}$/).transform(Number)),
  telefono:z.string().regex(/^[0-9]{10}$/),
  correo_electronico:correo,
  distrito_numero:z.coerce.number().int().min(1).max(40),

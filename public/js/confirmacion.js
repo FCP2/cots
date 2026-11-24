@@ -2,9 +2,9 @@
 if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  const el=id=>document.getElementById(id);
  let codigo='',registro=null,experiencias=[],fotoUrl=null,busy=false,modo='existente',permiteNuevo=false,nuevoIniciado=false,distritos=[];
- const panes=['confirmCodigoPane','confirmIdentidadPane','confirmFichaPane'];
+ const panes=['confirmCodigoPane','confirmFichaPane'];
  function message(value,error=false){const box=el('confirmMessage');box.textContent=value;box.classList.toggle('hidden',!value);box.classList.toggle('is-error',error);if(value)box.scrollIntoView({block:'nearest'});}
- function step(n){panes.forEach((id,i)=>el(id).classList.toggle('hidden',i!==n));[1,2,3].forEach((v)=>el(`confirmStep${v}`).classList.toggle('active',v===n+1));el('confirmSteps').classList.remove('hidden');el('confirmSuccessPane').classList.add('hidden');el('confirmPreviewPane').classList.add('hidden');message('');}
+ function step(n){panes.forEach((id,i)=>el(id).classList.toggle('hidden',i!==n));el('confirmIdentidadPane').classList.add('hidden');[1,2].forEach(v=>{const item=el(`confirmStep${v}`),active=v===n+1;item.classList.toggle('active',active);if(active)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');});el('confirmSteps').classList.remove('hidden');el('confirmSuccessPane').classList.add('hidden');el('confirmPreviewPane').classList.add('hidden');el('confirmRevisar').setAttribute('aria-expanded','false');message('');}
  async function request(url,opts={}){const res=await fetch(url,{credentials:'same-origin',cache:'no-store',...opts});const data=await res.json().catch(()=>({}));if(!res.ok)throw Error(data.error||'No se pudo completar la solicitud.');return data;}
  async function json(url,body,method='POST'){return request(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
  function loading(button,on,label='Procesando...'){
@@ -45,7 +45,8 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   el('confirmDatosCard').classList.toggle('hidden',nuevo);
   el('confirmVolverIdentidad').classList.toggle('hidden',!nuevo);
   el('confirmFichaHeading').textContent=nuevo?'Nuevo registro y ficha curricular':'Información complementaria';
-  el('confirmStep3').textContent=nuevo?'03 · Nuevo registro y ficha':'03 · Ficha y vista previa';
+  el('confirmStep2').textContent='02 · Ficha';
+  el('confirmFoto').required=nuevo;
   el('confirmGuardar').textContent=nuevo?'Registrar y guardar ficha':'Guardar mi ficha';
  }
  async function cargarDistritos(){if(distritos.length)return;distritos=await request('/api/public/distritos');
@@ -89,7 +90,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  }
  function updateVisiblePreview(){if(modo==='nuevo')actualizarRegistroNuevo();if(registro&&!el('confirmPreviewPane').classList.contains('hidden'))renderPreview();}
  function preview(){renderPreview();
-  el('confirmPreviewPane').classList.remove('hidden');el('confirmPreviewPane').scrollIntoView({block:'start',behavior:'smooth'});
+  el('confirmPreviewPane').classList.remove('hidden');el('confirmRevisar').setAttribute('aria-expanded','true');el('confirmPreviewPane').scrollIntoView({block:'start',behavior:'smooth'});
  }
  async function loadFicha({preservarFoto=false}={}){const data=await request('/api/confirmacion/ficha');if(modo==='nuevo'&&!preservarFoto)el('confirmFoto').value='';nuevoIniciado=false;configurarModo(false);registro=data.registro;experiencias=data.experiencias.map(x=>({...x}));displayData(el('confirmDatos'));
   const niveles=['primaria','secundaria','preparatoria','bachillerato','licenciatura','maestría','doctorado'];
@@ -97,7 +98,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   el('confirmOtroNivel').value=el('confirmNivel').value==='otro'?registro.nivel_estudios:'';
   el('confirmFichaForm').elements.estatus_estudios.value=registro.estatus_estudios||'';
   el('confirmCursos').value=registro.cursos||'';el('confirmNivel').dispatchEvent(new Event('change'));
-  renderExperiences();showPhoto();step(2);
+  renderExperiences();showPhoto();step(1);
  }
  function limpiarRegistroNuevo(){
   el('confirmCodigoForm').reset();el('confirmIdentidadForm').reset();el('confirmFichaForm').reset();
@@ -115,8 +116,13 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  }
  el('confirmCodigoForm').addEventListener('submit',async e=>{e.preventDefault();if(busy||!e.target.reportValidity())return;
   busy=true;const button=e.target.querySelector('button[type=submit]');loading(button,true);
-  try{codigo=el('confirmCodigo').value.trim().toUpperCase();const inv=await json('/api/confirmacion/codigo',{codigo_invitacion:codigo});el('confirmResponsable').textContent=inv.responsable;el('confirmEquipo').textContent=inv.equipo;
-   permiteNuevo=inv.permite_nuevo;el('confirmNuevo').classList.toggle('hidden',!permiteNuevo);el('confirmNuevoNoDisponible').classList.toggle('hidden',permiteNuevo);step(1);}
+  try{const codigoIngresado=el('confirmCodigo').value.trim().toUpperCase();const inv=await json('/api/confirmacion/codigo',{codigo_invitacion:codigoIngresado});
+   if(!inv.permite_nuevo)throw Error('Este código no está vigente para crear un registro nuevo. Solicita un código activo al responsable.');
+   const conservarDatos=nuevoIniciado&&codigo===codigoIngresado;codigo=codigoIngresado;permiteNuevo=true;
+   el('confirmResponsable').textContent=inv.responsable;el('confirmEquipo').textContent=inv.equipo;
+   await cargarDistritos();configurarModo(true);
+   if(!conservarDatos){el('confirmFichaForm').reset();el('confirmNivel').dispatchEvent(new Event('change'));experiencias=[];renderExperiences();nuevoIniciado=true;}
+   actualizarRegistroNuevo();showPhoto();step(1);}
   catch(err){message(err.message,true);}finally{busy=false;loading(button,false);}
  });
  el('confirmCambiarCodigo').addEventListener('click',()=>{codigo='';nuevoIniciado=false;permiteNuevo=false;step(0);});
@@ -129,15 +135,15 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  el('confirmNuevo').addEventListener('click',async()=>{if(busy||!permiteNuevo)return;busy=true;loading(el('confirmNuevo'),true,'Preparando...');
   try{await cargarDistritos();configurarModo(true);
    if(!nuevoIniciado){el('confirmFichaForm').reset();el('confirmNivel').dispatchEvent(new Event('change'));experiencias=[];renderExperiences();nuevoIniciado=true;}
-   actualizarRegistroNuevo();showPhoto();step(2);
+   actualizarRegistroNuevo();showPhoto();step(1);
   }catch(err){message(err.message,true);}finally{busy=false;loading(el('confirmNuevo'),false);}
  });
- el('confirmVolverIdentidad').addEventListener('click',()=>{if(!busy)step(1);});
+ el('confirmVolverIdentidad').addEventListener('click',()=>{if(!busy){step(0);el('confirmCodigo').focus();}});
  el('confirmNivel').addEventListener('change',()=>{const other=el('confirmNivel').value==='otro';el('confirmOtroNivelLabel').classList.toggle('hidden',!other);el('confirmOtroNivel').required=other;});
  el('confirmAgregarExperiencia').addEventListener('click',()=>{if(experiencias.length>=5)return;experiencias.push({puesto:'',institucion:'',periodo_inicio:'',periodo_fin:null});renderExperiences();updateVisiblePreview();});
  el('confirmFoto').addEventListener('change',()=>{const file=el('confirmFoto').files[0];if(file&&(file.size>2*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))){el('confirmFoto').value='';message('Selecciona una foto JPG, PNG o WebP de hasta 2 MB.',true);}showPhoto();updateVisiblePreview();});
  el('confirmRevisar').addEventListener('click',preview);
- el('confirmCerrarPreview').addEventListener('click',()=>el('confirmPreviewPane').classList.add('hidden'));
+ el('confirmCerrarPreview').addEventListener('click',()=>{el('confirmPreviewPane').classList.add('hidden');el('confirmRevisar').setAttribute('aria-expanded','false');el('confirmRevisar').focus();});
  el('confirmOtroRegistro').addEventListener('click',()=>{step(0);el('confirmCodigo').focus();});
  for(const campo of ['nombre','apellido_paterno','apellido_materno']){
   el('confirmFichaForm').elements[campo].addEventListener('input',e=>{
@@ -145,6 +151,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
    e.target.value=e.target.value.replace(noPermitidos,'');
   });
  }
+ el('confirmFichaForm').elements.edad.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,2);});
  el('confirmFichaForm').elements.seccion_electoral.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);});
  el('confirmFichaForm').addEventListener('input',updateVisiblePreview);
  el('confirmFichaForm').addEventListener('change',updateVisiblePreview);

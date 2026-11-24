@@ -287,6 +287,8 @@ body:has(#loginVista:not(.hidden)) > header {
 #confirmacionVista .confirm-experience h3 { font-size:.9rem; font-weight:800; }
 #confirmacionVista .confirm-remove { color:#8a263c; font-size:.8rem; font-weight:700; text-decoration:underline; }
 #confirmacionVista .confirm-muted { color:#675d59; font-weight:500; }
+#confirmacionVista .confirm-photo-label { color:#4e1223; font-size:.94rem; font-weight:800; line-height:1.5; }
+#confirmacionVista .confirm-photo-help { margin:.35rem 0 .7rem; color:#675d59; font-size:.8rem; line-height:1.5; }
 #confirmacionVista textarea { width:100%; resize:vertical; }
 #confirmacionVista .confirm-photo { inline-size:9rem; block-size:11rem; margin-top:.8rem; overflow:clip; border:2px solid var(--confirm-gold); border-radius:.5rem; background:#f4f4f4; contain:layout paint; }
 #confirmacionVista .confirm-photo img { display:block; inline-size:100%; block-size:100%; max-inline-size:none; max-block-size:none; object-fit:cover; object-position:center; }

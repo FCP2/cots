@@ -115,6 +115,9 @@ for(const campo of ['nombre','apellido_paterno','apellido_materno']){
 $('inscripcionForm').elements.telefono.addEventListener('input',e=>{
  e.target.value=e.target.value.replace(/\D/g,'').slice(0,10);
 });
+$('inscripcionForm').elements.edad.addEventListener('input',e=>{
+ e.target.value=e.target.value.replace(/\D/g,'').slice(0,2);
+});
 $('inscripcionForm').elements.seccion_electoral.addEventListener('input',e=>{
  e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);
 });
