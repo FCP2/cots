@@ -80,14 +80,6 @@ router.post('/nuevo',limit({max:10,windowMs:900000}),async(req,res,next)=>{
   if(inv.correo_autorizado&&inv.correo_autorizado.trim().toLowerCase()!==r.correo_electronico){
    await c.query('ROLLBACK');return res.status(403).json({error:'No se pudo validar la invitación para este correo.'});
   }
-  const anteriores=await c.query(`SELECT nombre,apellido_paterno,apellido_materno FROM inscripciones
-   WHERE invitacion_id=$1 AND seccion_electoral=$2 AND telefono=$3 AND eliminado_en IS NULL`,
-   [inv.id,r.seccion_electoral,r.telefono]);
-  if(anteriores.rows.some(x=>keyName(x.nombre)===keyName(r.nombre)
-   &&keyName(x.apellido_paterno)===keyName(r.apellido_paterno)
-   &&keyName(x.apellido_materno)===keyName(r.apellido_materno))){
-   await c.query('ROLLBACK');return res.status(409).json({error:'Ya existe un registro con estos datos para este código. Usa «Ya tengo registro».'});
-  }
   const added=await c.query(`INSERT INTO inscripciones
    (invitacion_id,nombre,apellido_paterno,apellido_materno,curp,edad,telefono,correo_electronico,distrito_numero,seccion_electoral,
     referente_nombre,referente_apellido_paterno,referente_apellido_materno)

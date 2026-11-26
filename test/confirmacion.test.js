@@ -147,20 +147,31 @@ test('nuevo registro y ficha se guardan juntos y abren sesión para la fotograf�
  }finally{pool.connect=original;}
 });
 
-test('nuevo registro rechaza código vencido y coincidencia previa sin duplicar',async()=>{
- const original=pool.connect;
+test('nuevo registro rechaza un código vencido',async()=>{
+ const original=pool.connect,queries=[];
+ pool.connect=async()=>({query:async(sql,params)=>{queries.push({sql,params});
+  if(sql.includes('SELECT * FROM invitaciones'))return {rows:[{...activa,vence_en:new Date('2020-01-01')}]};
+  return {rows:[]};},release(){}});
  try{
-  for(const duplicate of [false,true]){
-   const queries=[];
-   pool.connect=async()=>({query:async(sql,params)=>{queries.push({sql,params});
-    if(sql.includes('SELECT * FROM invitaciones'))return {rows:[{...activa,vence_en:duplicate?activa.vence_en:new Date('2020-01-01')}]};
-    if(sql.includes('FROM inscripciones')&&sql.includes('telefono=$3'))return {rows:duplicate?[{nombre:'Ma. Jose',apellido_paterno:'Garcia',apellido_materno:'Lopez'}]:[]};
-    return {rows:[]};},release(){}});
-   const out=response();let error;await handler('post','/nuevo')({body:nuevoBody},out.res,e=>{error=e;});
-   assert.ifError(error);assert.equal(out.state.status,duplicate?409:403);
-   assert.equal(queries.some(q=>q.sql.includes('INSERT INTO inscripciones')),false);
-   assert.equal(queries.at(-1).sql,'ROLLBACK');
-  }
+  const out=response();let error;await handler('post','/nuevo')({body:nuevoBody},out.res,e=>{error=e;});
+  assert.ifError(error);assert.equal(out.state.status,403);
+  assert.equal(queries.some(q=>q.sql.includes('INSERT INTO inscripciones')),false);
+  assert.equal(queries.at(-1).sql,'ROLLBACK');
+ }finally{pool.connect=original;}
+});
+
+test('nuevo registro permite repetir los mismos datos para el mismo código',async()=>{
+ const original=pool.connect,queries=[];
+ pool.connect=async()=>({query:async(sql,params)=>{queries.push({sql,params});
+  if(sql.includes('SELECT * FROM invitaciones'))return {rows:[activa]};
+  if(sql.includes('INSERT INTO inscripciones'))return {rows:[{id:902}]};
+  return {rows:[]};},release(){}});
+ try{
+  const out=response();let error;await handler('post','/nuevo')({body:nuevoBody},out.res,e=>{error=e;});
+  assert.ifError(error);assert.equal(out.state.status,201);
+  assert.equal(queries.filter(q=>q.sql.includes('INSERT INTO inscripciones')).length,1);
+  assert.equal(queries.some(q=>q.sql.includes('FROM inscripciones')&&q.sql.includes('telefono=$3')),false);
+  assert.equal(queries.at(-1).sql,'COMMIT');
  }finally{pool.connect=original;}
 });
 
