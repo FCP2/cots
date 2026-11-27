@@ -63,6 +63,8 @@ Antes de desplegar esta actualización ejecuta `npm run db:migrate:identificador
 
 Las altas nuevas realizadas con esta versión en `?confirmar=registro` reciben automáticamente `version_captura=ficha_rfc_v1`, incluso cuando no capturan RFC. Los registros anteriores conservan NULL en las tres columnas; no se infiere la etapa por fecha ni por haber llenado una ficha. El RFC y la homoclave no son únicos. Ambos son opcionales: se admite RFC sin homoclave o ambos vacíos; una homoclave requiere su RFC. Se comprueba el formato, no la existencia del RFC en el SAT.
 
+El formulario presenta un solo campo «RFC con homoclave». Acepta el RFC de persona física completo (13 caracteres, por ejemplo `GALA9001010A1`) con o sin guion antes de la homoclave (`GALA900101-0A1`), solo la base de 10 caracteres si se desconoce la homoclave, o el campo vacío. La interfaz agrega el guion al capturar la homoclave. Al enviar, separa los 10 caracteres y los 3 restantes para usar las columnas existentes; este ajuste visual no necesita otra migración ni actualiza registros anteriores.
+
 Los reportes Excel general y por responsable agregan al final RFC sin homoclave, homoclave, RFC completo (cuando se conocen ambos), identificador de captura e ID de registro. Filtra `Identificador de captura = ficha_rfc_v1` para obtener las altas de esta etapa; `Sin identificador` conserva la distinción para filas anteriores. La prueba `npm run test:registros-repetidos` verifica también la migración en tablas temporales, la conservación de una fila histórica y dos altas con el mismo RFC.
 
 En Git Bash, desde la carpeta del proyecto:

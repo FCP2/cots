@@ -36,7 +36,8 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  }
  function nuevoRegistro(){const f=el('confirmFichaForm'),fd=new FormData(f),data={};
   for(const key of ['nombre','apellido_paterno','apellido_materno','curp','edad','telefono','correo_electronico','distrito_numero','seccion_electoral','referente_nombre','referente_apellido_paterno','referente_apellido_materno'])data[key]=String(fd.get(key)||'').trim();
-  for(const key of ['rfc','homoclave'])data[key]=String(fd.get(key)||'').trim().toUpperCase();
+  const rfc=String(fd.get('rfc')||'').trim().toUpperCase().replace('-','');
+  data.rfc=rfc.slice(0,10);data.homoclave=rfc.slice(10);
   data.curp=data.curp.toUpperCase();return data;
  }
  function actualizarRegistroNuevo(){if(modo!=='nuevo')return;const r=nuevoRegistro(),d=distritos.find(x=>String(x.numero)===r.distrito_numero);
@@ -59,7 +60,6 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  function validForm(){const f=el('confirmFichaForm');if(!f.reportValidity())return false;
   if(modo==='nuevo'){
    const r=nuevoRegistro();
-   if(r.homoclave&&!r.rfc){message('Captura el RFC para agregar la homoclave, o deja ambos campos vacíos.',true);el('confirmRfc').setAttribute('aria-invalid','true');el('confirmRfc').focus();return false;}
    if(r.curp&&!/^[A-Z][AEIOUX][A-Z]{2}\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[HM][A-Z]{5}[A-Z0-9]\d$/.test(r.curp)){
     message('La CURP debe tener 18 caracteres y un formato válido, o dejarse vacía.',true);f.elements.curp.focus();return false;
    }
@@ -179,7 +179,6 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   });
  }
  el('confirmFichaForm').elements.edad.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,2);});
- for(const id of ['confirmRfc','confirmHomoclave'])el(id).addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();el('confirmRfc').removeAttribute('aria-invalid');});
  el('confirmFichaForm').elements.seccion_electoral.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);});
  el('confirmFichaForm').addEventListener('input',updateVisiblePreview);
  el('confirmFichaForm').addEventListener('change',updateVisiblePreview);
