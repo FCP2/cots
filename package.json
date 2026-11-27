@@ -8,6 +8,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test",
+    "test:registros-repetidos": "node scripts/verificar-registros-repetidos.js",
     "crear-admin": "node scripts/crear-admin.js",
     "reset-llave": "node scripts/reset-llave.js",
     "css:build": "tailwindcss -i ./public/css/input.css -o ./public/css/styles.css --minify",
@@ -20,7 +21,8 @@
     "db:migrate:eliminacion-invitaciones": "node scripts/migrar-eliminacion-invitaciones.js",
     "db:migrate:acceso-responsables": "node scripts/migrar-acceso-responsables.js",
     "db:migrate:codigos-consultables": "node scripts/migrar-codigos-consultables.js",
-    "db:migrate:fichas-curriculares": "node scripts/migrar-fichas-curriculares.js"
+    "db:migrate:fichas-curriculares": "node scripts/migrar-fichas-curriculares.js",
+    "db:migrate:identificador-rfc": "node scripts/migrar-identificador-rfc.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

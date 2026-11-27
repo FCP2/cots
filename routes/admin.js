@@ -243,7 +243,8 @@ router.get('/reportes/inscripciones.xlsx',async(req,res,next)=>{
     s.curp,
     s.edad,s.telefono,s.correo_electronico,s.distrito_numero,d.cabecera,s.seccion_electoral,
     s.referente_nombre,s.referente_apellido_paterno,s.referente_apellido_materno,
-    i.invitador_nombre,i.destinatario_nombre,s.creado_en
+    i.invitador_nombre,i.destinatario_nombre,s.creado_en,
+    s.id,s.rfc,s.homoclave,s.version_captura
     FROM inscripciones s JOIN invitaciones i ON i.id=s.invitacion_id
     JOIN distritos_federales d ON d.numero=s.distrito_numero
     WHERE s.eliminado_en IS NULL AND ($1::text IS NULL OR lower(btrim(i.invitador_nombre))=lower($1))
@@ -263,16 +264,18 @@ router.get('/reportes/inscripciones.xlsx',async(req,res,next)=>{
    ['Nombre(s)',24],['Apellido paterno',24],['Apellido materno',24],['CURP',22],
    ['Edad',10],['Teléfono',18],['Correo electrónico',34],['Distrito',12],['Cabecera',34],
    ['Sección',12],['Referente nombre(s)',24],['Referente apellido paterno',28],
-   ['Referente apellido materno',28],['Responsable',30],['Equipo',30],['Fecha (UTC)',22]
+   ['Referente apellido materno',28],['Responsable',30],['Equipo',30],['Fecha (UTC)',22],
+   ['RFC sin homoclave',22],['Homoclave',14],['RFC completo',22],['Identificador de captura',26],['ID de registro',18]
   ].map(([header,width])=>({header,width}));
   for(const x of detail.rows)detalle.addRow([
    x.nombre,x.apellido_paterno,x.apellido_materno||'',x.curp||'',x.edad,x.telefono,
    x.correo_electronico,x.distrito_numero,x.cabecera,x.seccion_electoral,
    x.referente_nombre,x.referente_apellido_paterno,x.referente_apellido_materno||'',
-   x.invitador_nombre,x.destinatario_nombre,new Date(x.creado_en)
+   x.invitador_nombre,x.destinatario_nombre,new Date(x.creado_en),
+   x.rfc||'',x.homoclave||'',x.rfc&&x.homoclave?x.rfc+x.homoclave:'',x.version_captura||'Sin identificador',x.id?String(x.id):''
   ]);
   detalle.getColumn(16).numFmt='dd/mm/yyyy hh:mm';
-  detalle.autoFilter={from:'A1',to:'P1'};
+  detalle.autoFilter={from:'A1',to:'U1'};
   for(const sheet of [resumen,detalle]){
    const header=sheet.getRow(sheet===resumen?4:1);
    header.font={bold:true,color:{argb:'FFFFFFFF'}};

@@ -84,6 +84,36 @@ test('la ficha exige una experiencia o la declaración sin experiencia laboral',
 const nuevoBody={codigo_invitacion:'ABCD-1234-ABCD-1234',registro:{nombre:'Ma. José',apellido_paterno:'García',apellido_materno:'López',curp:'',edad:'34',telefono:'5512345678',correo_electronico:'persona@example.com',distrito_numero:'1',seccion_electoral:'1234',referente_nombre:'Ana',referente_apellido_paterno:'Pérez',referente_apellido_materno:''},ficha:{nivel_estudios:'licenciatura',otro_nivel:'',estatus_estudios:'titulado',cursos:'Taller',sin_experiencia_laboral:false,experiencias:[{puesto:'Coordinadora',institucion:'Instituto',periodo_inicio:'2020-01',periodo_fin:null}]}};
 const activa={id:13,estado:'pendiente',vence_en:new Date('2030-01-01'),max_usos:null,usos:2,correo_autorizado:null,eliminado_en:null};
 
+test('RFC y homoclave son opcionales y se normalizan sin convertirse en identificadores únicos',()=>{
+ const {registroCurricularSchema}=require('../validation/captura-curricular');
+ for(const campos of [{},{rfc:'',homoclave:''},{rfc:null,homoclave:null}]){
+  const data=registroCurricularSchema.parse({...nuevoBody.registro,...campos});
+  assert.equal(data.rfc,null);assert.equal(data.homoclave,null);
+ }
+ const solo=registroCurricularSchema.parse({...nuevoBody.registro,rfc:' gala900101 '});
+ assert.equal(solo.rfc,'GALA900101');assert.equal(solo.homoclave,null);
+ const completo=registroCurricularSchema.parse({...nuevoBody.registro,rfc:'gala900101',homoclave:'0a1'});
+ assert.equal(completo.homoclave,'0A1');
+ for(const campos of [{rfc:'123'},{rfc:'GALA901301'},{rfc:'GALA900101',homoclave:'A!'},{homoclave:'ABC'},{version_captura:'otra'}]){
+  assert.equal(registroCurricularSchema.safeParse({...nuevoBody.registro,...campos}).success,false);
+ }
+});
+
+test('alta curricular guarda RFC, homoclave y bandera automática en la inscripción nueva',async()=>{
+ const original=pool.connect,queries=[];
+ pool.connect=async()=>({query:async(sql,params)=>{queries.push({sql,params});
+  if(sql.includes('SELECT * FROM invitaciones'))return {rows:[activa]};
+  if(sql.includes('INSERT INTO inscripciones'))return {rows:[{id:903}]};
+  return {rows:[]};},release(){}});
+ try{
+  const out=response();let error;
+  await handler('post','/nuevo')({body:{...nuevoBody,registro:{...nuevoBody.registro,rfc:'gala900101',homoclave:'0a1'}}},out.res,e=>{error=e;});
+  assert.ifError(error);assert.equal(out.state.status,201);
+  assert.deepEqual(queries.find(q=>q.sql.includes('INSERT INTO inscripciones')).params.slice(-3),['GALA900101','0A1','ficha_rfc_v1']);
+  assert.equal(queries.some(q=>/UPDATE inscripciones/.test(q.sql)),false);
+ }finally{pool.connect=original;}
+});
+
 test('el nombre del nuevo registro admite apóstrofes y rechaza números',async()=>{
  const {datosInscripcionSchema}=require('../validation/inscripcion');
  const registro={...nuevoBody.registro,nombre:"Ma. D’Ávila",apellido_paterno:"O'García",apellido_materno:'De la Cruz'};
@@ -114,6 +144,36 @@ test('edad exige exactamente dos dígitos numéricos',()=>{
  }
 });
 
+test('código incompleto se rechaza antes de consultar y un código desconocido no habilita el formulario',async()=>{
+ const original=pool.query;let consultas=0;
+ pool.query=async()=>{consultas++;return {rows:[]};};
+ try{
+  for(const codigo_invitacion of ['','ABCD-1234-ABCD-123','ABCD-1234-ABCD-123Z']){
+   const out=response();let error;
+   await handler('post','/codigo')({body:{codigo_invitacion}},out.res,e=>{error=e;});
+   assert.ifError(error);assert.equal(out.state.status,400);
+  }
+  assert.equal(consultas,0);
+  const out=response();let error;
+  await handler('post','/codigo')({body:{codigo_invitacion:nuevoBody.codigo_invitacion}},out.res,e=>{error=e;});
+  assert.ifError(error);assert.equal(out.state.status,403);assert.equal(consultas,1);
+ }finally{pool.query=original;}
+});
+
+test('la subida de fotografía rechaza contenido vacío, tipo incorrecto y archivos mayores de 2 MB',async()=>{
+ const original=pool.connect;
+ pool.connect=async()=>{throw Error('No debe guardar una fotografía inválida');};
+ const png=Buffer.alloc(100);Buffer.from([137,80,78,71,13,10,26,10]).copy(png);
+ const grande=Buffer.alloc(2*1024*1024+1);png.copy(grande);
+ try{
+  for(const [body,mime] of [[Buffer.alloc(0),'image/png'],[Buffer.alloc(100),'image/png'],[png,'image/jpeg'],[grande,'image/png']]){
+   const out=response();let error;
+   await handler('put','/foto')({inscripcionId:50,body,get:()=>mime},out.res,e=>{error=e;});
+   assert.ifError(error);assert.equal(out.state.status,400);
+  }
+ }finally{pool.connect=original;}
+});
+
 test('el código vencido permite completar fichas, pero no ofrece registro nuevo',async()=>{
  const original=pool.query;
  pool.query=async()=>({rows:[{...activa,invitador_nombre:'Ana',destinatario_nombre:'Equipo',vence_en:new Date('2020-01-01')} ]});
@@ -140,6 +200,8 @@ test('nuevo registro y ficha se guardan juntos y abren sesión para la fotograf�
  try{const out=response();let error;await handler('post','/nuevo')({body:nuevoBody},out.res,e=>{error=e;});
   assert.ifError(error);assert.equal(out.state.status,201);assert.equal(out.state.cookie.name,'cots_confirm');
   assert.equal(queries.filter(q=>q.sql.includes('INSERT INTO inscripciones')).length,1);
+  const alta=queries.find(q=>q.sql.includes('INSERT INTO inscripciones'));
+  assert.deepEqual(alta.params.slice(-3),[null,null,'ficha_rfc_v1']);
   assert.equal(queries.some(q=>q.sql.includes('INSERT INTO fichas_curriculares')),true);
   assert.equal(queries.some(q=>q.sql.includes('INSERT INTO experiencias_laborales')),true);
   assert.equal(queries.some(q=>q.sql.includes('INSERT INTO sesiones_confirmacion')),true);

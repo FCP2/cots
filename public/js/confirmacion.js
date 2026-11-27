@@ -5,7 +5,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  const panes=['confirmCodigoPane','confirmFichaPane'];
  function message(value,error=false){const box=el('confirmMessage');box.textContent=value;box.classList.toggle('hidden',!value);box.classList.toggle('is-error',error);if(value)box.scrollIntoView({block:'nearest'});}
  function step(n){panes.forEach((id,i)=>el(id).classList.toggle('hidden',i!==n));el('confirmIdentidadPane').classList.add('hidden');[1,2].forEach(v=>{const item=el(`confirmStep${v}`),active=v===n+1;item.classList.toggle('active',active);if(active)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');});el('confirmSteps').classList.remove('hidden');el('confirmSuccessPane').classList.add('hidden');el('confirmPreviewPane').classList.add('hidden');el('confirmRevisar').setAttribute('aria-expanded','false');message('');}
- async function request(url,opts={}){const res=await fetch(url,{credentials:'same-origin',cache:'no-store',...opts});const data=await res.json().catch(()=>({}));if(!res.ok)throw Error(data.error||'No se pudo completar la solicitud.');return data;}
+ async function request(url,opts={}){const res=await fetch(url,{credentials:'same-origin',cache:'no-store',...opts});const data=await res.json().catch(()=>({}));if(!res.ok){const error=Error(data.error||'No se pudo completar la solicitud.');error.status=res.status;throw error;}return data;}
  async function json(url,body,method='POST'){return request(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
  function loading(button,on,label='Procesando...'){
   if(on){button.dataset.original=button.textContent;button.disabled=true;button.setAttribute('aria-busy','true');button.replaceChildren();const spinner=document.createElement('span');spinner.className='loader';spinner.setAttribute('aria-hidden','true');button.append(spinner,document.createTextNode(' '+label));}
@@ -36,6 +36,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  }
  function nuevoRegistro(){const f=el('confirmFichaForm'),fd=new FormData(f),data={};
   for(const key of ['nombre','apellido_paterno','apellido_materno','curp','edad','telefono','correo_electronico','distrito_numero','seccion_electoral','referente_nombre','referente_apellido_paterno','referente_apellido_materno'])data[key]=String(fd.get(key)||'').trim();
+  for(const key of ['rfc','homoclave'])data[key]=String(fd.get(key)||'').trim().toUpperCase();
   data.curp=data.curp.toUpperCase();return data;
  }
  function actualizarRegistroNuevo(){if(modo!=='nuevo')return;const r=nuevoRegistro(),d=distritos.find(x=>String(x.numero)===r.distrito_numero);
@@ -48,7 +49,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   el('confirmVolverIdentidad').classList.toggle('hidden',!nuevo);
   el('confirmFichaHeading').textContent=nuevo?'Nuevo registro y ficha curricular':'Información complementaria';
   el('confirmStep2').textContent='02 · Ficha';
-  el('confirmFoto').required=nuevo;
+  el('confirmFoto').required=nuevo||!registro?.tiene_foto;
   el('confirmGuardar').textContent=nuevo?'Registrar y guardar ficha':'Guardar mi ficha';
  }
  async function cargarDistritos(){if(distritos.length)return;distritos=await request('/api/public/distritos');
@@ -58,6 +59,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  function validForm(){const f=el('confirmFichaForm');if(!f.reportValidity())return false;
   if(modo==='nuevo'){
    const r=nuevoRegistro();
+   if(r.homoclave&&!r.rfc){message('Captura el RFC para agregar la homoclave, o deja ambos campos vacíos.',true);el('confirmRfc').setAttribute('aria-invalid','true');el('confirmRfc').focus();return false;}
    if(r.curp&&!/^[A-Z][AEIOUX][A-Z]{2}\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[HM][A-Z]{5}[A-Z0-9]\d$/.test(r.curp)){
     message('La CURP debe tener 18 caracteres y un formato válido, o dejarse vacía.',true);f.elements.curp.focus();return false;
    }
@@ -96,7 +98,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
  function preview(){renderPreview();
   el('confirmPreviewPane').classList.remove('hidden');el('confirmRevisar').setAttribute('aria-expanded','true');el('confirmPreviewPane').scrollIntoView({block:'start',behavior:'smooth'});
  }
- async function loadFicha({preservarFoto=false}={}){const data=await request('/api/confirmacion/ficha');if(modo==='nuevo'&&!preservarFoto)el('confirmFoto').value='';nuevoIniciado=false;configurarModo(false);registro=data.registro;experiencias=data.experiencias.map(x=>({...x}));if(!experiencias.length)experiencias=[experienciaVacia()];displayData(el('confirmDatos'));
+ async function loadFicha({preservarFoto=false}={}){const data=await request('/api/confirmacion/ficha');if(modo==='nuevo'&&!preservarFoto)el('confirmFoto').value='';nuevoIniciado=false;registro=data.registro;configurarModo(false);experiencias=data.experiencias.map(x=>({...x}));if(!experiencias.length)experiencias=[experienciaVacia()];displayData(el('confirmDatos'));
   const niveles=['primaria','secundaria','preparatoria','bachillerato','licenciatura','maestría','doctorado'];
   el('confirmNivel').value=niveles.includes(registro.nivel_estudios)?registro.nivel_estudios:registro.nivel_estudios?'otro':'';
   el('confirmOtroNivel').value=el('confirmNivel').value==='otro'?registro.nivel_estudios:'';
@@ -118,16 +120,35 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   el('confirmSteps').classList.add('hidden');el('confirmSuccessPane').classList.remove('hidden');
   el('confirmSuccessPane').scrollIntoView({block:'start',behavior:'smooth'});
  }
- el('confirmCodigoForm').addEventListener('submit',async e=>{e.preventDefault();if(busy||!e.target.reportValidity())return;
+ async function avisoCodigo(texto,titulo='Revisa tu código de invitación'){
+  const input=el('confirmCodigo');input.setAttribute('aria-invalid','true');
+  if(typeof Swal!=='undefined')await Swal.fire({...estiloDialogo,icon:'warning',iconColor:'#BC955C',
+   title:titulo,text:texto,showCancelButton:false,confirmButtonText:'Revisar código',
+   confirmButtonAriaLabel:'Cerrar aviso y revisar el código de invitación',returnFocus:false});
+  else message(texto,true);
+  input.focus();
+ }
+ // Conserva las restricciones HTML, pero sustituye la burbuja nativa por el aviso modal.
+ el('confirmCodigoForm').noValidate=true;
+ el('confirmCodigo').setAttribute('aria-invalid','false');
+ el('confirmCodigo').addEventListener('input',()=>{el('confirmCodigo').setAttribute('aria-invalid','false');message('');});
+ el('confirmCodigoForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;
+  const input=el('confirmCodigo');input.value=input.value.trim().toUpperCase();
+  if(!input.validity.valid){busy=true;try{await avisoCodigo('El código está incompleto o tiene un formato incorrecto. Revisa que tenga 4 grupos de 4 caracteres separados por guiones, sin omitir ningún carácter. Puedes copiarlo directamente del mensaje de tu responsable.');}finally{busy=false;}return;}
   busy=true;const button=e.target.querySelector('button[type=submit]');loading(button,true);
+  let codigoValidado=false;
   try{const codigoIngresado=el('confirmCodigo').value.trim().toUpperCase();const inv=await json('/api/confirmacion/codigo',{codigo_invitacion:codigoIngresado});
-   if(!inv.permite_nuevo)throw Error('Este código no está vigente para crear un registro nuevo. Solicita un código activo al responsable.');
+   if(!inv.permite_nuevo){await avisoCodigo('Este código no está vigente para crear un registro nuevo. Revisa el código o solicita uno activo a tu responsable.','Código no disponible');return;}
+   codigoValidado=true;
    const conservarDatos=nuevoIniciado&&codigo===codigoIngresado;codigo=codigoIngresado;permiteNuevo=true;
    el('confirmResponsable').textContent=inv.responsable;el('confirmEquipo').textContent=inv.equipo;
    await cargarDistritos();configurarModo(true);
    if(!conservarDatos){el('confirmFichaForm').reset();el('confirmNivel').dispatchEvent(new Event('change'));experiencias=[experienciaVacia()];renderExperiences();actualizarEstadoExperiencia();nuevoIniciado=true;}
    actualizarRegistroNuevo();showPhoto();step(1);}
-  catch(err){message(err.message,true);}finally{busy=false;loading(button,false);}
+  catch(err){
+   if(!codigoValidado&&(err.status===400||err.status===403))await avisoCodigo('No pudimos validar este código. Revisa que sea exactamente el que te compartieron y que no falte ningún carácter. Si es correcto, consulta con tu responsable si sigue activo.');
+   else message(err.message,true);
+  }finally{busy=false;loading(button,false);}
  });
  el('confirmCambiarCodigo').addEventListener('click',()=>{codigo='';nuevoIniciado=false;permiteNuevo=false;step(0);});
  el('confirmIdentidadForm').addEventListener('submit',async e=>{e.preventDefault();if(busy||!e.target.reportValidity())return;
@@ -158,6 +179,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   });
  }
  el('confirmFichaForm').elements.edad.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,2);});
+ for(const id of ['confirmRfc','confirmHomoclave'])el(id).addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();el('confirmRfc').removeAttribute('aria-invalid');});
  el('confirmFichaForm').elements.seccion_electoral.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);});
  el('confirmFichaForm').addEventListener('input',updateVisiblePreview);
  el('confirmFichaForm').addEventListener('change',updateVisiblePreview);

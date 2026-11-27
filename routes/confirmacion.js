@@ -7,7 +7,7 @@ const {z}=require('zod');
 const {pool}=require('../config/database');
 const {limit}=require('../middleware/limiter');
 const {token,hashToken,keyName}=require('../utils');
-const {datosInscripcionSchema}=require('../validation/inscripcion');
+const {registroCurricularSchema,VERSION_CAPTURA}=require('../validation/captura-curricular');
 const router=express.Router();
 const COOKIE='cots_confirm';
 const COOKIE_OPTIONS={httpOnly:true,secure:process.env.COOKIE_SECURE==='true',sameSite:'strict',path:'/api/confirmacion'};
@@ -19,7 +19,7 @@ const EXPERIENCIA=z.object({puesto:z.string().trim().min(1).max(150),institucion
 const FICHA=z.object({nivel_estudios:z.enum(['primaria','secundaria','preparatoria','bachillerato','licenciatura','maestría','doctorado','otro']),otro_nivel:z.string().trim().max(100).default(''),estatus_estudios:z.enum(['inconcluso','concluido','titulado']),cursos:z.string().trim().max(5000).default(''),sin_experiencia_laboral:z.boolean().default(false),experiencias:z.array(EXPERIENCIA).max(5)}).strict()
  .refine(v=>v.nivel_estudios!=='otro'||v.otro_nivel.length>0)
  .refine(v=>v.sin_experiencia_laboral?v.experiencias.length===0:v.experiencias.length>0);
-const NUEVO=z.object({codigo_invitacion:CODIGO,registro:datosInscripcionSchema,ficha:FICHA}).strict();
+const NUEVO=z.object({codigo_invitacion:CODIGO,registro:registroCurricularSchema,ficha:FICHA}).strict();
 const FALLA='No se pudo identificar un registro único con esos datos. Consulta al administrador si necesitas apoyo.';
 const CODIGO_INVALIDO='Código de invitación no disponible.';
 const fileDir=()=>process.env.PHOTO_STORAGE_DIR&&path.isAbsolute(process.env.PHOTO_STORAGE_DIR)?process.env.PHOTO_STORAGE_DIR:process.env.NODE_ENV==='production'?null:path.join(__dirname,'../private/fotos');
@@ -80,12 +80,13 @@ router.post('/nuevo',limit({max:10,windowMs:900000}),async(req,res,next)=>{
   if(inv.correo_autorizado&&inv.correo_autorizado.trim().toLowerCase()!==r.correo_electronico){
    await c.query('ROLLBACK');return res.status(403).json({error:'No se pudo validar la invitación para este correo.'});
   }
+  // Cada envío confirmado crea una inscripción independiente, incluso con datos repetidos.
   const added=await c.query(`INSERT INTO inscripciones
    (invitacion_id,nombre,apellido_paterno,apellido_materno,curp,edad,telefono,correo_electronico,distrito_numero,seccion_electoral,
-    referente_nombre,referente_apellido_paterno,referente_apellido_materno)
-   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+    referente_nombre,referente_apellido_paterno,referente_apellido_materno,rfc,homoclave,version_captura)
+   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
    [inv.id,r.nombre,r.apellido_paterno,r.apellido_materno,r.curp,r.edad,r.telefono,r.correo_electronico,r.distrito_numero,
-    r.seccion_electoral,r.referente_nombre,r.referente_apellido_paterno,r.referente_apellido_materno]);
+    r.seccion_electoral,r.referente_nombre,r.referente_apellido_paterno,r.referente_apellido_materno,r.rfc,r.homoclave,VERSION_CAPTURA]);
   const id=added.rows[0].id,nivel=f.nivel_estudios==='otro'?f.otro_nivel:f.nivel_estudios;
   await c.query(`INSERT INTO fichas_curriculares(inscripcion_id,nivel_estudios,estatus_estudios,cursos,sin_experiencia_laboral)
    VALUES($1,$2,$3,$4,$5)`,[id,nivel,f.estatus_estudios,f.cursos,f.sin_experiencia_laboral]);
