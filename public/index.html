@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/vendor/sweetalert2.min.css">
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css?v=20261128-registros20">
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 <header class="bg-guinda text-white px-4 py-5 shadow">
@@ -142,22 +142,39 @@
   </div>
  </section>
  <section id="adminVista" class="hidden space-y-5"><div class="card"><h2 class="text-xl font-extrabold text-guinda" id="bienvenida">Administración</h2><div id="kpis" class="mt-3 text-sm font-semibold"></div></div>
-  <nav class="panel-nav" aria-label="Secciones de administración"><button type="button" class="panel-tab active" data-panel="panelGenerar" aria-current="page">Generar invitación</button><button type="button" class="panel-tab" data-panel="panelSeguimiento">Seguimiento y registros</button><button type="button" class="panel-tab" data-panel="panelMetricas">Métricas y reportes</button></nav>
+  <nav class="panel-nav" aria-label="Secciones de administración"><button type="button" class="panel-tab active" data-panel="panelGenerar" aria-current="page">Generar invitación</button><button type="button" class="panel-tab" data-panel="panelSeguimiento">Seguimiento y registros</button><button type="button" class="panel-tab" data-panel="panelMetricas">Métricas y reportes</button><button type="button" class="panel-tab" data-panel="panelFichas">Fichas curriculares</button></nav>
   <div id="panelGenerar">
   <div class="card"><h3 class="font-extrabold text-lg text-guinda">Generar invitación</h3><p class="text-sm text-slate-600 my-2">La URL de registro es común para todos; cada invitación tiene un código distinto. Los participantes pueden compartir ambos con su equipo. No hay límite de participantes; la vigencia sí aplica.</p>
    <form id="invitarForm" class="grid md:grid-cols-2 gap-3 mt-4"><label><span class="label">Responsable / quien invita</span><input name="invitador_nombre" class="field" required maxlength="250"></label><label><span class="label">Equipo o destinatario</span><input name="destinatario_nombre" class="field" required maxlength="250"></label><label><span class="label">Vigencia en días</span><input name="dias_vigencia" type="number" min="1" max="365" value="14" class="field" required></label><div class="flex items-end"><button id="generarInvitacion" class="btn-primary" type="submit">Generar enlace y código</button></div></form>
    <div id="enlaceCreado" class="mt-4 break-all text-sm"></div>
   </div>
   </div>
-  <div id="panelSeguimiento" class="hidden space-y-5">
+  <div id="panelSeguimiento" class="hidden space-y-5" hidden>
   <div class="card"><h3 class="font-extrabold text-lg text-guinda mb-3">Seguimiento de invitaciones</h3><p class="text-sm text-slate-500 mb-3">Las acciones afectan únicamente la invitación seleccionada.</p><div id="contenedorInvitaciones" class="invitation-scroll" tabindex="0" aria-label="Tabla de invitaciones; desplázate para ver más códigos"><table class="w-full text-sm"><thead class="bg-guinda text-white"><tr><th class="p-3 text-left">Responsable</th><th class="p-3 text-left">Equipo</th><th class="p-3">Inscripciones</th><th class="p-3">Vencimiento</th><th class="p-3">Estado</th><th class="p-3">Acciones</th></tr></thead><tbody id="tablaInvitaciones"></tbody></table></div></div>
   <div class="card"><div class="flex flex-wrap justify-between gap-3 mb-3"><h3 id="tituloInscritos" class="font-extrabold text-lg text-guinda">Inscripciones recibidas</h3><button id="verTodas" class="btn-secondary" type="button">Ver todas</button></div>
-   <p class="text-xs text-slate-500 mb-3">Las CURP proporcionadas aparecen parcialmente ocultas. Se muestran hasta 5000 registros por consulta.</p>
-   <div id="contenedorInscritos" class="inscripciones-scroll" tabindex="0" aria-label="Tabla de inscripciones; usa los encabezados para ordenar"><table class="w-full text-sm"><thead class="bg-guinda text-white"><tr><th scope="col" data-col="nombre" aria-sort="none"><button type="button" class="ordenar-columna">Nombre <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="curp_mascarada" aria-sort="none"><button type="button" class="ordenar-columna">CURP <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="distrito_numero" aria-sort="none"><button type="button" class="ordenar-columna">Distrito <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="seccion_electoral" aria-sort="none"><button type="button" class="ordenar-columna">Sección <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="referente" aria-sort="none"><button type="button" class="ordenar-columna">Referente <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="invitador_nombre" aria-sort="none"><button type="button" class="ordenar-columna">Invitador <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="creado_en" aria-sort="descending"><button type="button" class="ordenar-columna">Fecha <span aria-hidden="true">↓</span></button></th><th scope="col">Acciones</th></tr></thead><tbody id="tablaInscritos"></tbody></table></div>
+   <p class="text-xs text-slate-500 mb-3">Las CURP proporcionadas aparecen parcialmente ocultas. Se muestran 20 registros por página.</p>
+   <div id="contenedorInscritos" class="inscripciones-scroll" role="region" tabindex="0" aria-label="Tabla de inscripciones; usa los encabezados para ordenar"><table class="w-full text-sm"><thead class="bg-guinda text-white"><tr><th scope="col" data-col="nombre"><button type="button" class="ordenar-columna">Nombre <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="curp_mascarada"><button type="button" class="ordenar-columna">CURP <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="distrito_numero"><button type="button" class="ordenar-columna">Distrito <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="seccion_electoral"><button type="button" class="ordenar-columna">Sección <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="referente"><button type="button" class="ordenar-columna">Referente <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="invitador_nombre"><button type="button" class="ordenar-columna">Invitador <span aria-hidden="true">↕</span></button></th><th scope="col" data-col="creado_en" aria-sort="descending"><button type="button" class="ordenar-columna">Fecha <span aria-hidden="true">↓</span></button></th><th scope="col">Acciones</th></tr></thead><tbody id="tablaInscritos"></tbody></table></div>
+   <div class="flex flex-wrap items-center justify-between gap-3 mt-4"><p id="estadoInscritos" class="text-sm text-slate-600" role="status">Cargando registros…</p><div class="flex gap-2"><button id="inscritosAnterior" type="button" class="btn-secondary" disabled>Anterior</button><button id="inscritosSiguiente" type="button" class="btn-secondary" disabled>Siguiente</button></div></div>
   </div>
   </div>
-  <section id="panelMetricas" class="hidden space-y-5" aria-label="Métricas y reportes"><div class="card"><h3 class="font-extrabold text-lg text-guinda">Registros por responsable</h3><p class="text-sm text-slate-600 mt-1">Cada anillo representa su porcentaje del total de inscripciones.</p><div id="metricasResponsables" class="metricas-grid mt-4" tabindex="0" aria-label="Tarjetas de registros por responsable; desplázate para ver más responsables"></div></div>
+  <section id="panelMetricas" class="hidden space-y-5" hidden aria-label="Métricas y reportes"><div class="card"><h3 class="font-extrabold text-lg text-guinda">Registros por responsable</h3><p class="text-sm text-slate-600 mt-1">Cada anillo representa su porcentaje del total de inscripciones.</p><div id="metricasResponsables" class="metricas-grid mt-4" tabindex="0" aria-label="Tarjetas de registros por responsable; desplázate para ver más responsables"></div></div>
    <div class="card"><h3 class="font-extrabold text-lg text-guinda">Reportes en Excel</h3><p class="text-sm text-slate-600 mt-1">Descarga el total de inscripciones o el detalle de un responsable. El Excel incluye la CURP completa cuando se proporcionó; conserva el archivo en un lugar seguro.</p><div class="report-controls mt-4"><button id="exportarGeneral" type="button" class="btn-primary">Descargar reporte general</button><label><span class="label">Responsable</span><select id="responsableReporte" class="field"><option value="">Selecciona un responsable</option></select></label><button id="exportarResponsable" type="button" class="btn-secondary" disabled>Descargar por responsable</button></div></div>
+  </section>
+  <section id="panelFichas" class="hidden space-y-5" hidden aria-labelledby="tituloReporteFichas">
+   <div class="card"><h3 id="tituloReporteFichas" class="font-extrabold text-lg text-guinda">Reporte general de fichas curriculares</h3>
+    <p class="text-sm text-slate-600 mt-1">Selecciona la fecha y hora de creación de los registros. El archivo ZIP contendrá un PDF por ficha en carpetas de distrito federal y sección electoral. Se omiten duplicados verificables sin modificar la base de datos.</p>
+    <form id="reporteFichasForm" class="report-fichas-form mt-4" aria-labelledby="tituloReporteFichas">
+     <label><span class="label">Desde · fecha y hora</span><input id="fichasDesde" name="desde" type="datetime-local" class="field" required></label>
+     <label><span class="label">Hasta · fecha y hora</span><input id="fichasHasta" name="hasta" type="datetime-local" class="field" required></label>
+     <button id="consultarFichas" class="btn-primary" type="submit">Consultar fichas</button>
+    </form>
+    <p class="text-xs text-slate-500 mt-3">Las horas se interpretan según la zona horaria de este dispositivo. El rango incluye ambos extremos. Los registros se procesan por bloques y se entregan en un solo ZIP, organizado por distrito y sección.</p>
+   </div>
+   <div id="fichasResultado" class="card hidden" aria-live="polite">
+    <h4 class="font-extrabold text-guinda">Resultado de la consulta</h4><p id="fichasResumen" class="mt-2 text-sm"></p><p id="fichasFotosAviso" class="hidden mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950" role="alert"></p>
+    <div id="fichasRevision" class="mt-4"></div>
+    <button id="descargarFichas" type="button" class="btn-primary mt-4">Descargar fichas en ZIP</button><p id="fichasDescargaEstado" class="text-sm text-slate-600 mt-2" role="status"></p>
+   </div>
   </section>
  </section>
  <dialog id="adminFichaDialog" class="admin-ficha-dialog" aria-labelledby="adminFichaTitulo">
@@ -168,6 +185,6 @@
 <div id="adminPrintFicha" aria-hidden="true"></div>
 <script defer src="/vendor/sweetalert2.min.js"></script>
 <script defer src="/js/rfc-input.js?v=20261127-2"></script>
-<script defer src="/js/app.js"></script>
+<script defer src="/js/app.js?v=20261128-fotos-reporte"></script>
 <script defer src="/js/confirmacion.js?v=20261127-rfc2"></script>
 </body></html>

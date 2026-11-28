@@ -6,6 +6,7 @@ const esUrlPublicaFija=tokenInvitacion==='registro';
 let pendiente=null,enviando=false,revisando=false,entrando=false,entrandoResponsable=false,generandoInvitacion=false;
 let sesionActiva=null,saliendo=false,cargandoResponsable=false,fichaAdminCargando=false,paginaResponsable=1,totalPaginasResponsable=1;
 let inscripciones=[],ordenInscritos={col:'creado_en',dir:'desc'},filtroInscritos={id:null,etiqueta:''};
+let paginaInscritos=1,totalPaginasInscritos=1,totalInscritos=0,solicitudInscritos=0;
 let responsables=[];
 function view(id,show){$(id).classList.toggle('hidden',!show);}
 function limitarVisibles(contenedor,elementos,limite){
@@ -35,8 +36,13 @@ function botonCargando(button,loading,text='Cargando...'){
  }
 }
 async function api(path,opts={}){
- const res=await fetch(path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opts});
- const j=await res.json().catch(()=>({}));if(!res.ok)throw Error(j.error||'Error de conexión');return j;
+ let res;
+ try{res=await fetch(path,{credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},...opts});}
+ catch{throw Error('No fue posible conectar con el servidor. Revisa la conexión e inténtalo de nuevo.');}
+ if(!res.headers.get('content-type')?.includes('application/json'))throw Error('El servidor devolvió una página en lugar de datos. Verifica que la aplicación esté en ejecución y actualiza la página.');
+ let j;
+ try{j=await res.json();}catch{throw Error('La respuesta del servidor llegó incompleta. Inténtalo de nuevo.');}
+ if(!res.ok)throw Error(j?.error||'Error de conexión');return j;
 }
 function obj(form){return Object.fromEntries(new FormData(form).entries());}
 function celda(row,text){const e=document.createElement('td');e.className='p-2 border-b border-slate-100';e.textContent=text==null?'':String(text);row.append(e);return e;}
@@ -103,7 +109,7 @@ async function eliminarInscripcion(registro){
    try{return await api(`/api/admin/inscripciones/${registro.id}`,{method:'DELETE'});}
    catch(e){Swal.showValidationMessage(e.message);return false;}
   }});
- if(result.isConfirmed){await cargarAdmin(filtroInscritos);aviso('Inscripción eliminada del seguimiento y los reportes.');}
+ if(result.isConfirmed){await cargarAdmin(filtroInscritos,paginaInscritos);aviso('Inscripción eliminada del seguimiento y los reportes.');}
 }
 function nombre(p,prefix=''){return [p[prefix+'nombre'],p[prefix+'apellido_paterno'],p[prefix+'apellido_materno']].filter(Boolean).join(' ');}
 for(const campo of ['nombre','apellido_paterno','apellido_materno']){
@@ -260,12 +266,14 @@ async function cargarMisRegistros(pagina=1,button=null){
 $('responsableAnterior').addEventListener('click',e=>cargarMisRegistros(paginaResponsable-1,e.currentTarget).catch(err=>aviso(err.message,true)));
 $('responsableSiguiente').addEventListener('click',e=>cargarMisRegistros(paginaResponsable+1,e.currentTarget).catch(err=>aviso(err.message,true)));
 function mostrarPanel(id){
- for(const panel of ['panelGenerar','panelSeguimiento','panelMetricas'])view(panel,panel===id);
- document.querySelectorAll('.panel-tab').forEach(b=>{
-  const active=b.dataset.panel===id;b.classList.toggle('active',active);
+ const tabs=[...document.querySelectorAll('.panel-tab')];
+ if(!tabs.some(tab=>tab.dataset.panel===id))return;
+ tabs.forEach(b=>{
+  const active=b.dataset.panel===id,panel=$(b.dataset.panel);
+  panel.hidden=!active;panel.classList.toggle('hidden',!active);
+  b.classList.toggle('active',active);
   if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
  });
- if(id==='panelSeguimiento')renderInscritos();
  ajustarPaneles();
 }
 document.querySelectorAll('.panel-tab').forEach(b=>b.addEventListener('click',()=>mostrarPanel(b.dataset.panel)));
@@ -274,7 +282,7 @@ $('salir').addEventListener('click',async()=>{
  try{await api(sesionActiva==='responsable'?'/api/responsable/salir':'/api/auth/salir',{method:'POST'});location.href='/';}
  catch(e){aviso(e.message,true);saliendo=false;botonCargando($('salir'),false);}
 });
-async function cargarAdmin(filtro=null){
+async function cargarAdmin(filtro=null,pagina=1){
  const [stats,inv,totales]=await Promise.all([api('/api/admin/resumen'),api('/api/admin/invitaciones'),api('/api/admin/responsables')]);
  responsables=totales;renderMetricas();
  $('kpis').textContent=`Inscripciones: ${stats.registros} · Distritos con registros: ${stats.distritos} · Invitaciones: ${stats.invitaciones}`;
@@ -294,17 +302,30 @@ async function cargarAdmin(filtro=null){
   actions.append(group);body.append(tr);
  }
  ajustarPaneles();
- await cargarInscritos(filtro?.id??null,filtro?.etiqueta??'');
+ await cargarInscritos(filtro?.id??null,filtro?.etiqueta??'',pagina);
 }
-async function cargarInscritos(id=null,etiqueta=''){
+async function cargarInscritos(id=null,etiqueta='',pagina=1){
+ const solicitud=++solicitudInscritos;
+ const anterior=$('inscritosAnterior'),siguiente=$('inscritosSiguiente');
+ anterior.disabled=true;siguiente.disabled=true;
+ $('estadoInscritos').textContent='Cargando registros…';
  try{
-  inscripciones=await api('/api/admin/inscripciones'+(id?'?invitacion_id='+encodeURIComponent(id):''));
+  const params=new URLSearchParams({pagina:String(pagina),orden:ordenInscritos.col,direccion:ordenInscritos.dir});
+  if(id)params.set('invitacion_id',id);
+  const data=await api('/api/admin/inscripciones?'+params);
+  if(solicitud!==solicitudInscritos)return;
+  inscripciones=data.registros;paginaInscritos=data.pagina;totalPaginasInscritos=data.paginas;totalInscritos=data.total;
   filtroInscritos={id,etiqueta};
   $('tituloInscritos').textContent=id?`Registros · ${etiqueta}`:'Todos los registros';
   if(id)mostrarPanel('panelSeguimiento');
   renderInscritos();
-  if(id)$('tablaInscritos').closest('.card').scrollIntoView({behavior:'smooth'});
- }catch(e){aviso(e.message,true);}
+  if(id&&pagina===1)$('tablaInscritos').closest('.card').scrollIntoView({behavior:'smooth'});
+ }catch(e){if(solicitud===solicitudInscritos)aviso(e.message,true);}
+ finally{if(solicitud===solicitudInscritos){
+  anterior.disabled=paginaInscritos<=1;siguiente.disabled=paginaInscritos>=totalPaginasInscritos;
+  const desde=totalInscritos?(paginaInscritos-1)*20+1:0,hasta=Math.min(paginaInscritos*20,totalInscritos);
+  $('estadoInscritos').textContent=`${desde}–${hasta} de ${totalInscritos} registros · Página ${paginaInscritos} de ${totalPaginasInscritos}`;
+ }}
 }
 function renderMetricas(){
  const contenedor=$('metricasResponsables');contenedor.replaceChildren();
@@ -399,11 +420,67 @@ async function descargarExcel(button,responsable){
 }
 $('exportarGeneral').addEventListener('click',()=>descargarExcel($('exportarGeneral')));
 $('exportarResponsable').addEventListener('click',()=>descargarExcel($('exportarResponsable'),$('responsableReporte').value));
-function valorInscrito(x,col){
- if(col==='nombre')return nombre(x);
- if(col==='referente')return nombre(x,'referente_');
- return x[col]??'';
-}
+let filtroFichas=null,revisionFichas=[];
+const fechaLocal=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+const hoy=new Date();
+const inicioHoy=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate());
+$('fichasDesde').value=fechaLocal(inicioHoy);$('fichasHasta').value=fechaLocal(hoy);
+$('reporteFichasForm').addEventListener('input',()=>{filtroFichas=null;view('fichasResultado',false);});
+$('reporteFichasForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!e.target.reportValidity()||$('consultarFichas').disabled)return;
+ const desde=new Date($('fichasDesde').value),hasta=new Date($('fichasHasta').value);
+ if(!Number.isFinite(+desde)||!Number.isFinite(+hasta)||desde>hasta){aviso('Revisa el rango de fecha y hora.',true);return;}
+ const filtro={desde:desde.toISOString(),hasta:hasta.toISOString()};
+ botonCargando($('consultarFichas'),true,'Consultando...');
+ try{
+  $('fichasDescargaEstado').textContent='';
+  const params=new URLSearchParams(filtro);
+  const data=await api(`/api/admin/reportes/fichas/previa?${params}`);
+  if(!data||!Array.isArray(data.duplicados)||!Array.isArray(data.revision)||typeof data.firma!=='string'||!Number.isFinite(data.encontrados)||!Number.isFinite(data.fichas)||!Number.isFinite(data.sin_foto)||!Number.isFinite(data.fotos_no_disponibles))throw Error('La respuesta de fichas está incompleta. Actualiza la página e inténtalo de nuevo.');
+  filtroFichas={...filtro,firma:data.firma};revisionFichas=data.revision;
+  $('fichasResumen').textContent=`${data.encontrados} registros con ficha · ${data.fichas} fichas después de omitir ${data.duplicados.reduce((n,x)=>n+x.omitidos_ids.length,0)} duplicados verificables · ${data.revision.length} grupos para revisión · ${data.sin_foto} sin fotografía registrada · ${data.fotos_no_disponibles} fotografías registradas no disponibles en este servidor.`;
+  $('fichasFotosAviso').textContent=data.fotos_no_disponibles?`No se generará un ZIP con fotografías faltantes. Hay ${data.fotos_no_disponibles} archivo(s) de foto registrados en la base de datos que este servidor no puede leer. Genera el reporte en el servidor que tiene montado el disco de fotografías o restaura los archivos antes de descargar.`:'';
+  view('fichasFotosAviso',data.fotos_no_disponibles>0);
+  const box=$('fichasRevision');box.replaceChildren();
+  if(data.duplicados.length){const p=document.createElement('p');p.className='text-sm text-slate-600 mb-3';p.textContent=`Duplicados omitidos: ${data.duplicados.map(g=>`se conserva #${g.conservado_id}; se omite ${g.omitidos_ids.map(id=>'#'+id).join(', ')}`).join(' · ')}`;box.append(p);}
+  if(data.revision.length){const heading=document.createElement('h5');heading.className='font-bold text-guinda mb-2';heading.textContent='Coincidencias que requieren tu decisión';box.append(heading);
+   const help=document.createElement('p');help.className='text-sm text-slate-600 mb-3';help.textContent='Una diferencia de escritura puede ser la misma persona o alguien distinto. Revisa cada grupo antes de descargar.';box.append(help);
+   for(const group of data.revision){
+    const card=document.createElement('div');card.className='fichas-review';
+    const names=document.createElement('p');names.className='text-sm';names.textContent=group.registros.map(r=>`#${r.id} ${r.nombre} (distrito ${r.distrito}, sección ${r.seccion})`).join(' · ');
+    const label=document.createElement('label');label.className='block mt-2';const caption=document.createElement('span');caption.className='label';caption.textContent='Decisión para este grupo';
+    const select=document.createElement('select');select.className='field';select.required=true;select.dataset.group=group.id;
+    select.add(new Option('Selecciona una opción',''));select.add(new Option('Son personas distintas: conservar todas','todos'));
+    group.registros.forEach(r=>select.add(new Option(`Es la misma persona: conservar #${r.id} ${r.nombre}`,String(r.id))));
+    label.append(caption,select);card.append(names,label);box.append(card);
+   }
+  }
+  $('descargarFichas').disabled=data.fichas===0||data.fotos_no_disponibles>0;view('fichasResultado',true);
+ }catch(err){filtroFichas=null;view('fichasResultado',false);aviso(err.message,true);}finally{botonCargando($('consultarFichas'),false);}
+});
+$('descargarFichas').addEventListener('click',async()=>{
+ if(!filtroFichas||$('descargarFichas').disabled)return;
+ const decisions={};
+ for(const group of revisionFichas){const select=$('fichasRevision').querySelector(`select[data-group="${group.id}"]`);if(!select.reportValidity())return;decisions[group.id]=select.value;}
+ const button=$('descargarFichas'),estado=$('fichasDescargaEstado');
+ botonCargando(button,true,'Preparando ZIP...');estado.textContent='Preparando las fichas del rango seleccionado…';
+ try{
+  const response=await fetch('/api/admin/reportes/fichas/descargar',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({...filtroFichas,decisiones:decisions})});
+  if(!response.ok){const data=await response.json().catch(()=>({}));throw Error(data.error||'No se pudo generar el reporte.');}
+  const total=response.headers.get('X-Fichas-Total');
+  let blob;
+  if(response.body){
+   const reader=response.body.getReader(),chunks=[];let bytes=0;
+   while(true){const {done,value}=await reader.read();if(done)break;chunks.push(value);bytes+=value.byteLength;
+    estado.textContent=`Generando ${total||'las'} fichas y descargando ZIP: ${(bytes/1048576).toFixed(1)} MB recibidos…`;
+   }
+   blob=new Blob(chunks,{type:'application/zip'});
+  }else blob=await response.blob();
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download=`fichas-curriculares-${new Date().toISOString().slice(0,10)}.zip`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  estado.textContent=`ZIP listo: ${total||'las'} fichas organizadas por distrito y sección.`;
+ }catch(err){estado.textContent='La descarga no terminó.';aviso(err.message,true);}finally{botonCargando(button,false);}
+});
 function celdaFicha(row,value){const td=document.createElement('td');td.textContent=value==null?'':String(value);row.append(td);}
 function mesAnio(value){return value?`${value.slice(5,7)}/${value.slice(0,4)}`:'';}
 function nombreArchivoFicha(value){
@@ -423,7 +500,7 @@ async function verFichaAdmin(x,button){
    const row=document.createElement('tr'),e=data.experiencias[i];
    if(i===0&&r.sin_experiencia_laboral){const cell=document.createElement('td');cell.colSpan=3;cell.textContent='Sin experiencia laboral';row.append(cell);experiencias.append(row);continue;}
    celdaFicha(row,e?.puesto);celdaFicha(row,e?.institucion);
-   celdaFicha(row,e?.periodo_inicio?`${mesAnio(e.periodo_inicio)} — ${e.periodo_fin?mesAnio(e.periodo_fin):'actualidad'}`:'');
+   celdaFicha(row,e?.periodo_inicio?`${mesAnio(e.periodo_inicio)}${e.periodo_fin?` — ${mesAnio(e.periodo_fin)}`:''}`:'');
    experiencias.append(row);
   }
   const formacion=sheet.querySelector('#confirmPreviewFormacion');formacion.replaceChildren();
@@ -462,36 +539,32 @@ $('adminFichaImprimir').addEventListener('click',()=>{
 });
 function renderInscritos(){
  const {col,dir}=ordenInscritos;
- const rows=[...inscripciones].sort((a,b)=>{
-  const av=valorInscrito(a,col),bv=valorInscrito(b,col);
-  const result=col==='creado_en'?new Date(av)-new Date(bv):col==='distrito_numero'?Number(av)-Number(bv):String(av).localeCompare(String(bv),'es',{numeric:true,sensitivity:'base'});
-  return dir==='asc'?result:-result;
- });
  const body=$('tablaInscritos');body.replaceChildren();
- for(const x of rows){let tr=document.createElement('tr');celda(tr,nombre(x));celda(tr,x.curp_mascarada);celda(tr,String(x.distrito_numero).padStart(2,'0'));
+ for(const x of inscripciones){let tr=document.createElement('tr');celda(tr,nombre(x));celda(tr,x.curp_mascarada);celda(tr,String(x.distrito_numero).padStart(2,'0'));
    celda(tr,x.seccion_electoral);celda(tr,nombre(x,'referente_'));celda(tr,x.invitador_nombre);
    celda(tr,new Date(x.creado_en).toLocaleString('es-MX'));
    const acciones=celda(tr,'');const ver=botonAccion('Ver','view',e=>verFichaAdmin(x,e.currentTarget));
    ver.setAttribute('aria-label',`Ver ficha curricular de ${nombre(x)}`);
    const eliminar=botonAccion('Eliminar','delete',()=>eliminarInscripcion(x).catch(e=>aviso(e.message,true)));
-   eliminar.setAttribute('aria-label',`Eliminar inscripción de ${nombre(x)}`);acciones.append(ver,eliminar);body.append(tr);}
- if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=8;td.className='p-4 text-center text-slate-500';td.textContent='No hay inscripciones para mostrar.';tr.append(td);body.append(tr);}
+   eliminar.setAttribute('aria-label',`Eliminar inscripción de ${nombre(x)}`);
+   const grupo=document.createElement('div');grupo.className='registro-acciones';grupo.append(ver,eliminar);acciones.append(grupo);body.append(tr);}
+ if(!inscripciones.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=8;td.className='p-4 text-center text-slate-500';td.textContent='No hay inscripciones para mostrar.';tr.append(td);body.append(tr);}
  document.querySelectorAll('#contenedorInscritos th[data-col]').forEach(th=>{
   const active=th.dataset.col===col;
-  th.setAttribute('aria-sort',active?(dir==='asc'?'ascending':'descending'):'none');
+  if(active)th.setAttribute('aria-sort',dir==='asc'?'ascending':'descending');else th.removeAttribute('aria-sort');
   th.querySelector('span').textContent=active?(dir==='asc'?'↑':'↓'):'↕';
  });
  const contenedor=$('contenedorInscritos');
- contenedor.classList.toggle('is-scrollable',rows.length>20);
- contenedor.style.maxHeight=rows.length>20?`${Math.ceil(body.rows[19].getBoundingClientRect().bottom-contenedor.getBoundingClientRect().top)}px`:'';
- contenedor.scrollTop=0;
+ contenedor.scrollTop=0;contenedor.scrollLeft=0;
 }
 document.querySelectorAll('#contenedorInscritos th[data-col] button').forEach(button=>button.addEventListener('click',()=>{
  const col=button.closest('th').dataset.col;
  ordenInscritos={col,dir:ordenInscritos.col===col&&ordenInscritos.dir==='asc'?'desc':'asc'};
- renderInscritos();
+ cargarInscritos(filtroInscritos.id,filtroInscritos.etiqueta,1);
 }));
 $('verTodas').addEventListener('click',()=>cargarInscritos());
+$('inscritosAnterior').addEventListener('click',()=>cargarInscritos(filtroInscritos.id,filtroInscritos.etiqueta,paginaInscritos-1));
+$('inscritosSiguiente').addEventListener('click',()=>cargarInscritos(filtroInscritos.id,filtroInscritos.etiqueta,paginaInscritos+1));
 $('invitarForm').addEventListener('submit',async e=>{
  e.preventDefault();if(generandoInvitacion||!e.target.reportValidity())return;generandoInvitacion=true;botonCargando($('generarInvitacion'),true,'Generando...');try{
   const j=await api('/api/admin/invitaciones',{method:'POST',body:JSON.stringify(obj(e.target))});

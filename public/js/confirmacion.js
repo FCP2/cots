@@ -24,7 +24,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
   const heading=document.createElement('div');heading.className='confirm-heading';const title=document.createElement('h3');title.textContent=`Experiencia ${index+1}`;
   const remove=document.createElement('button');remove.type='button';remove.className='confirm-remove';remove.textContent='Eliminar';remove.hidden=experiencias.length===1;remove.addEventListener('click',()=>{experiencias.splice(index,1);renderExperiences();actualizarEstadoExperiencia();});heading.append(title,remove);
   const grid=document.createElement('div');grid.className='confirm-grid';
-  for(const [key,label,type,required] of [['puesto','Puesto','text',true],['institucion','Institución','text',true],['periodo_inicio','Inicio (mes/año)','month',true],['periodo_fin','Fin (mes/año, opcional)','month',false]]){
+  for(const [key,label,type,required] of [['puesto','Puesto','text',true],['institucion','Institución','text',true],['periodo_inicio','Inicio (mes/año)','month',true]]){
    const item=input(label,type,exp[key],required);item.control.addEventListener('input',()=>{exp[key]=item.control.value;});grid.append(item.wrap);
   }
   row.append(heading,grid);box.append(row);
@@ -84,7 +84,7 @@ if(new URLSearchParams(location.search).get('confirmar')==='registro'){
    const row=document.createElement('tr'),x=p.experiencias[i];
    if(i===0&&p.sin_experiencia_laboral){const cell=document.createElement('td');cell.colSpan=3;cell.textContent='Sin experiencia laboral';row.append(cell);body.append(row);continue;}
    previewCell(row,x?.puesto);previewCell(row,x?.institucion);
-   previewCell(row,x?.periodo_inicio?`${monthYear(x.periodo_inicio)} — ${x.periodo_fin?monthYear(x.periodo_fin):'actualidad'}`:monthYear(x?.periodo_fin));
+   previewCell(row,x?.periodo_inicio?`${monthYear(x.periodo_inicio)}${x.periodo_fin?` — ${monthYear(x.periodo_fin)}`:''}`:monthYear(x?.periodo_fin));
    body.append(row);
   }
   const formacion=el('confirmPreviewFormacion');formacion.replaceChildren();

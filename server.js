@@ -39,6 +39,7 @@ app.use('/api/confirmacion',require('./routes/confirmacion'));
 app.use('/api/admin',require('./routes/admin'));
 app.use((req,res)=>res.status(404).json({error:'Ruta no encontrada'}));
 app.use((err,req,res,next)=>{
+ if(err.status===409||err.status===413)return res.status(err.status).json({error:err.message});
  if(err.code==='23505')return res.status(409).json({error:'No se pudo completar el registro. Contacta al responsable.'});
  if(err.code==='23503')return res.status(400).json({error:'El distrito seleccionado no está disponible'});
  if(err.code==='23514'||err.code==='22P02')return res.status(400).json({error:'Valores no válidos'});

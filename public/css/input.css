@@ -14,6 +14,15 @@
   .inscripciones-scroll { @apply overflow-auto; }
   .inscripciones-scroll.is-scrollable { overscroll-behavior: contain; }
   .inscripciones-scroll thead th { @apply sticky top-0 bg-guinda p-3 text-left; }
+  #contenedorInscritos { max-inline-size: 100%; }
+  #contenedorInscritos table { min-inline-size: 920px; border-collapse: separate; border-spacing: 0; }
+  #contenedorInscritos thead th { z-index: 2; }
+  #contenedorInscritos th:has(> .ordenar-columna) { padding: 0; }
+  #contenedorInscritos .ordenar-columna { display: block; inline-size: 100%; min-block-size: 44px; padding: 0.75rem; text-align: left; }
+  #contenedorInscritos .ordenar-columna:focus-visible { outline: 2px solid #BC955C; outline-offset: -3px; }
+  #contenedorInscritos th:last-child { position: sticky; right: 0; z-index: 3; min-inline-size: 118px; box-shadow: -8px 0 12px -12px #1e293b; }
+  #contenedorInscritos td:last-child { position: sticky; right: 0; z-index: 1; background: white; box-shadow: -8px 0 12px -12px #1e293b; }
+  .registro-acciones { display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem; white-space: nowrap; }
   .invitation-scroll { @apply overflow-auto; }
   .invitation-scroll.is-scrollable { overscroll-behavior: contain; scrollbar-gutter: stable; }
   .invitation-scroll thead th { @apply sticky top-0 z-10 bg-guinda; }
@@ -298,8 +307,8 @@ body:has(#loginVista:not(.hidden)) > header {
 #confirmacionVista .confirm-photo-label { color:#4e1223; font-size:.94rem; font-weight:800; line-height:1.5; }
 #confirmacionVista .confirm-photo-help { margin:.35rem 0 .7rem; color:#675d59; font-size:.8rem; line-height:1.5; }
 #confirmacionVista textarea { width:100%; resize:vertical; }
-#confirmacionVista .confirm-photo { inline-size:9rem; block-size:11rem; margin-top:.8rem; overflow:clip; border:2px solid var(--confirm-gold); border-radius:.5rem; background:#f4f4f4; contain:layout paint; }
-#confirmacionVista .confirm-photo img { display:block; inline-size:100%; block-size:100%; max-inline-size:none; max-block-size:none; object-fit:cover; object-position:center; }
+#confirmacionVista .confirm-photo { inline-size:9rem; block-size:11rem; margin-top:.8rem; padding:.25rem; overflow:clip; border:2px solid var(--confirm-gold); border-radius:.5rem; background:#f4f4f4; contain:layout paint; }
+#confirmacionVista .confirm-photo img { display:block; inline-size:100%; block-size:100%; max-inline-size:none; max-block-size:none; object-fit:contain; object-position:center; }
 #confirmacionVista .confirm-preview-pane { margin-block:1.1rem; }
 #confirmacionVista .confirm-preview-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:1.2rem 1.5rem; border:1px solid #e8dfd6; border-radius:.8rem .8rem 0 0; background:#faf8f5; }
 #confirmacionVista .confirm-preview-toolbar h2 { margin:.25rem 0 0; color:#4e1223; font-family:Georgia,serif; font-size:1.5rem; }
@@ -312,8 +321,8 @@ body:has(#loginVista:not(.hidden)) > header {
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-brand img:last-child { display:block; width:100%; height:auto; margin-top:-.12rem; opacity:.5; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-name-row { display:grid; grid-template-columns:6rem minmax(0,1fr); align-items:center; gap:.8rem; margin-bottom:1.15rem; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-name-row .curriculum-table-scroll { margin-bottom:0; }
-:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo { inline-size:6rem; min-inline-size:6rem; max-inline-size:6rem; block-size:6rem; min-block-size:6rem; max-block-size:6rem; display:grid; place-items:center; align-self:center; margin:0; overflow:clip; border:1px solid #555; background:#f4f4f4; contain:layout paint; }
-:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo img { display:block; inline-size:100%; block-size:100%; max-inline-size:none; max-block-size:none; object-fit:cover; object-position:center; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo { inline-size:6rem; min-inline-size:6rem; max-inline-size:6rem; block-size:6rem; min-block-size:6rem; max-block-size:6rem; display:grid; place-items:center; align-self:center; margin:0; padding:.25rem; overflow:clip; border:1px solid #555; background:#f4f4f4; contain:layout paint; }
+:is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-photo img { display:block; inline-size:100%; block-size:100%; max-inline-size:none; max-block-size:none; object-fit:contain; object-position:center; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table-scroll { max-width:100%; overflow-x:auto; margin-bottom:1.15rem; scrollbar-gutter:stable; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table-scroll:focus-visible { outline:2px solid #bc955c; outline-offset:2px; }
 :is(#confirmacionVista,#adminFichaDialog,#adminPrintFicha) .curriculum-table { width:100%; min-width:30rem; border-collapse:collapse; table-layout:fixed; font-size:.8rem; }
@@ -347,6 +356,12 @@ body:has(#loginVista:not(.hidden)) > header {
 #adminFichaDialog .admin-ficha-actions { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; }
 #adminFichaDialog .curriculum-sheet { border:0; border-radius:0; box-shadow:none; }
 #adminPrintFicha { display:none; }
+.report-fichas-form { display:grid; gap:.9rem; align-items:end; container-type:inline-size; }
+.report-fichas-form .field { width:100%; min-width:0; font-size:1rem; }
+.report-fichas-form .field:focus-visible,.fichas-review .field:focus-visible { outline:2px solid #bc955c; outline-offset:2px; }
+.report-fichas-form .field:user-invalid,.fichas-review .field:user-invalid { border-color:#a33445; }
+.fichas-review { padding:1rem; margin-block:.6rem; border:1px solid #ddc9a3; border-radius:.65rem; background:#faf8f5; }
+@media (min-width:48rem) { .report-fichas-form { grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto; } }
 
 @page { size:letter portrait; margin:.45in; }
 @media print {

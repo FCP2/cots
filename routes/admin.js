@@ -5,6 +5,8 @@ const crypto=require('crypto');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const ExcelJS=require('exceljs');
+const {ZipArchive}=require('archiver');
+const {preparar,resolver,renderPDF,filename,fotoDisponible}=require('../services/reporte-fichas');
 const {pool}=require('../config/database');
 const {auth,admin}=require('../middleware/auth');
 const {token,hashToken,audit}=require('../utils');
@@ -170,8 +172,15 @@ router.delete('/invitaciones/:id',async(req,res,next)=>{
 });
 router.get('/inscripciones',async(req,res,next)=>{
  try{
-  const id=req.query.invitacion_id;
+  const {invitacion_id:id,pagina:paginaParam='1',orden='creado_en',direccion='desc'}=req.query;
   if(id!==undefined&&!/^\d+$/.test(String(id)))return res.status(400).json({error:'Filtro de invitación inválido'});
+  if(!/^[1-9]\d{0,8}$/.test(String(paginaParam)))return res.status(400).json({error:'Página inválida'});
+  const columnas={nombre:"concat_ws(' ',s.nombre,s.apellido_paterno,s.apellido_materno)",curp_mascarada:'s.curp',distrito_numero:'s.distrito_numero',seccion_electoral:'s.seccion_electoral',referente:"concat_ws(' ',s.referente_nombre,s.referente_apellido_paterno,s.referente_apellido_materno)",invitador_nombre:'i.invitador_nombre',creado_en:'s.creado_en'};
+  if(typeof orden!=='string'||typeof direccion!=='string'||!Object.hasOwn(columnas,orden)||!['asc','desc'].includes(direccion))return res.status(400).json({error:'Orden inválido'});
+  const filtro=id||null;
+  const where='s.eliminado_en IS NULL AND ($1::bigint IS NULL OR s.invitacion_id=$1)';
+  const conteo=await pool.query(`SELECT count(*)::int AS total FROM inscripciones s WHERE ${where}`,[filtro]);
+  const total=conteo.rows[0].total,paginas=Math.max(1,Math.ceil(total/20)),pagina=Math.min(Number(paginaParam),paginas);
   const {rows}=await pool.query(`SELECT s.id,s.nombre,s.apellido_paterno,s.apellido_materno,s.edad,
     s.telefono,s.correo_electronico,s.distrito_numero,s.seccion_electoral,
     s.referente_nombre,s.referente_apellido_paterno,s.referente_apellido_materno,
@@ -180,9 +189,10 @@ router.get('/inscripciones',async(req,res,next)=>{
     d.cabecera
     FROM inscripciones s JOIN invitaciones i ON i.id=s.invitacion_id
     JOIN distritos_federales d ON d.numero=s.distrito_numero
-    WHERE s.eliminado_en IS NULL AND ($1::bigint IS NULL OR s.invitacion_id=$1)
-    ORDER BY s.creado_en DESC LIMIT 5000`,[id||null]);
-  res.set('Cache-Control','no-store').json(rows);
+    WHERE ${where}
+    ORDER BY ${columnas[orden]} ${direccion.toUpperCase()} NULLS LAST,s.id DESC
+    LIMIT 20 OFFSET $2`,[filtro,(pagina-1)*20]);
+  res.set('Cache-Control','no-store').json({registros:rows,total,pagina,paginas});
  }catch(e){next(e);}
 });
 router.get('/inscripciones/:id/ficha',async(req,res,next)=>{
@@ -287,5 +297,86 @@ router.get('/reportes/inscripciones.xlsx',async(req,res,next)=>{
    'Cache-Control':'no-store'});
   res.send(Buffer.from(await book.xlsx.writeBuffer()));
  }catch(e){next(e);}
+});
+const rangoFichasBase=z.object({desde:z.string().datetime({offset:true}),hasta:z.string().datetime({offset:true})}).strict();
+const rangoFichas=rangoFichasBase.refine(v=>new Date(v.desde)<=new Date(v.hasta));
+async function consultarFichas(rango){
+ const rows=[];
+ let cursorFecha=null,cursorId=null;
+ while(true){
+ const pagina=await pool.query(`SELECT s.id,s.nombre,s.apellido_paterno,s.apellido_materno,s.curp,s.rfc,s.homoclave,
+  s.telefono,s.distrito_numero,s.seccion_electoral,s.creado_en,d.cabecera,
+  f.nivel_estudios,f.estatus_estudios,f.cursos,f.sin_experiencia_laboral,f.foto_archivo,f.actualizado_en,
+  COALESCE((SELECT json_agg(json_build_object('puesto',e.puesto,'institucion',e.institucion,
+   'periodo_inicio',e.periodo_inicio,'periodo_fin',e.periodo_fin) ORDER BY e.orden)
+   FROM experiencias_laborales e WHERE e.inscripcion_id=s.id),'[]'::json) AS experiencias
+  FROM inscripciones s JOIN fichas_curriculares f ON f.inscripcion_id=s.id
+  JOIN distritos_federales d ON d.numero=s.distrito_numero
+  WHERE s.eliminado_en IS NULL AND s.creado_en >= $1::timestamptz AND s.creado_en <= $2::timestamptz
+   AND ($3::timestamptz IS NULL OR (s.creado_en,s.id)<($3::timestamptz,$4::bigint))
+  ORDER BY s.creado_en DESC,s.id DESC LIMIT 250`,[rango.desde,rango.hasta,cursorFecha,cursorId]);
+ rows.push(...pagina.rows);
+ if(pagina.rows.length<250)break;
+ const ultimo=pagina.rows.at(-1);cursorFecha=ultimo.creado_en;cursorId=ultimo.id;
+ }
+ const reporte=preparar(rows);
+ reporte.firma=crypto.createHash('sha256').update(JSON.stringify(rows)).digest('hex');
+ return reporte;
+}
+async function estadoFotos(fichas){
+ const conArchivo=fichas.filter(ficha=>Boolean(ficha.foto_archivo));
+ let fotosNoDisponibles=0;
+ for(let i=0;i<conArchivo.length;i+=25){
+  const disponibles=await Promise.all(conArchivo.slice(i,i+25).map(fotoDisponible));
+  fotosNoDisponibles+=disponibles.filter(disponible=>!disponible).length;
+ }
+ return {sin_foto:fichas.length-conArchivo.length,fotos_no_disponibles:fotosNoDisponibles};
+}
+router.get('/reportes/fichas/previa',async(req,res,next)=>{
+ const parsed=rangoFichas.safeParse(req.query);
+ if(!parsed.success)return res.status(400).json({error:'Indica un rango válido de fecha y hora.'});
+ try{
+  const reporte=await consultarFichas(parsed.data);
+  const fotos=await estadoFotos(reporte.items);
+  res.set('Cache-Control','private, no-store').json({
+   encontrados:reporte.items.length+reporte.duplicates.reduce((n,g)=>n+g.omitidos_ids.length,0),
+   fichas:reporte.items.length,duplicados:reporte.duplicates,revision:reporte.groups,firma:reporte.firma,
+   ...fotos
+  });
+ }catch(e){next(e);}
+});
+router.post('/reportes/fichas/descargar',async(req,res,next)=>{
+ const parsed=rangoFichasBase.extend({firma:z.string().regex(/^[0-9a-f]{64}$/),decisiones:z.record(z.union([z.literal('todos'),z.string().regex(/^\d+$/)])).default({})}).strict().refine(v=>new Date(v.desde)<=new Date(v.hasta)).safeParse(req.body);
+ if(!parsed.success)return res.status(400).json({error:'Rango o revisión de coincidencias inválidos.'});
+ try{
+  const reporte=await consultarFichas(parsed.data);
+  if(reporte.firma!==parsed.data.firma)return res.status(409).json({error:'Los registros cambiaron desde la consulta. Vuelve a consultar el rango antes de descargar.'});
+  const fichas=resolver(reporte,parsed.data.decisiones);
+  if(!fichas.length)return res.status(404).json({error:'No hay fichas curriculares para este rango.'});
+  const fotos=await estadoFotos(fichas);
+  if(fotos.fotos_no_disponibles)return res.status(409).json({error:`Hay ${fotos.fotos_no_disponibles} fotografía(s) registradas cuyos archivos no están disponibles en este servidor. Genera el reporte donde está montado el disco de fotografías o restaura esos archivos.`});
+  fichas.sort((a,b)=>Number(a.distrito_numero)-Number(b.distrito_numero)||String(a.seccion_electoral).localeCompare(String(b.seccion_electoral),'es',{numeric:true})||a.nombre_completo.localeCompare(b.nombre_completo,'es'));
+  const zip=new ZipArchive({zlib:{level:6}});
+  zip.on('error',e=>res.destroy(e));
+  res.on('close',()=>{if(!res.writableEnded)zip.abort();});
+  res.set({'Content-Type':'application/zip','Content-Disposition':`attachment; filename="fichas-curriculares-${new Date().toISOString().slice(0,10)}.zip"`,'Cache-Control':'private, no-store','X-Fichas-Total':String(fichas.length)});
+  zip.pipe(res);
+  for(const ficha of fichas){
+   const distrito=`Distrito_${String(ficha.distrito_numero).padStart(2,'0')}_${filename(ficha.cabecera)}`;
+   const seccion=`Seccion_${filename(ficha.seccion_electoral||'Sin dato')}`;
+   const ruta=`${distrito}/${seccion}/Ficha curricular - ${filename(ficha.nombre_completo)} - ${ficha.id}.pdf`;
+   const pdf=await renderPDF(ficha);
+   if(res.destroyed)break;
+   await new Promise((resolve,reject)=>{
+    const done=entry=>{if(entry.name!==ruta)return;cleanup();resolve();};
+    const fail=error=>{cleanup();reject(error);};
+    const closed=()=>{if(!res.writableEnded)fail(new Error('Descarga interrumpida'));};
+    const cleanup=()=>{zip.off('entry',done);zip.off('error',fail);res.off('close',closed);};
+    zip.on('entry',done);zip.once('error',fail);res.once('close',closed);
+    zip.append(pdf,{name:ruta});
+   });
+  }
+  if(!res.destroyed)await zip.finalize();
+ }catch(e){if(res.headersSent)res.destroy(e);else next(e);}
 });
 module.exports=router;
